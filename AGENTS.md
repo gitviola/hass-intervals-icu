@@ -22,15 +22,27 @@ Before finalizing significant changes:
 3. Confirm no credentials appear in tracked files.
 
 ## Releases
-When creating a new release:
-1. Decide next semantic version (`MAJOR.MINOR.PATCH`).
-2. Update `custom_components/intervals_icu/manifest.json` `version` to match (without `v` prefix).
-3. Run validation checks (`python3 -m compileall custom_components/intervals_icu` and CI workflows if available).
-4. Commit release changes to `main`.
-5. Create an annotated tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`.
-6. Push branch and tag: `git push origin main && git push origin vX.Y.Z`.
-7. Publish a GitHub Release for the tag with user-facing notes.
+Release rules (mandatory):
 
-Rules:
-- Never retag an existing version.
-- Tag format must be `vX.Y.Z`.
+1. Follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
+   - `MAJOR`: breaking changes (removed/renamed entities, incompatible config/data behavior).
+   - `MINOR`: backward-compatible features (new sensors/options/behavior).
+   - `PATCH`: backward-compatible fixes/docs/CI/internal changes.
+2. Every release MUST include a changelog entry in `CHANGELOG.md`.
+3. Every release MUST be a full GitHub Release with release notes (not only a git tag), matching HACS publish expectations.
+4. Tag format MUST be `vX.Y.Z` and MUST match manifest version `X.Y.Z`.
+5. Never retag or move an existing release tag.
+
+Release checklist:
+
+1. Add/update `CHANGELOG.md` under `## [Unreleased]` while developing.
+2. At release time, move unreleased notes into `## [X.Y.Z] - YYYY-MM-DD`.
+3. Update `custom_components/intervals_icu/manifest.json` `version` to `X.Y.Z` (no `v` prefix).
+4. Run validation checks (`python3 -m compileall custom_components/intervals_icu` and CI workflows if available).
+5. Commit release artifacts (including changelog + manifest).
+6. Create annotated tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`.
+7. Push branch and tag: `git push origin main && git push origin vX.Y.Z`.
+8. Publish GitHub Release `vX.Y.Z` with concise user-facing notes aligned with `CHANGELOG.md`.
+
+Backfill policy:
+- If a tag exists without release notes or changelog coverage, backfill both before the next release.
