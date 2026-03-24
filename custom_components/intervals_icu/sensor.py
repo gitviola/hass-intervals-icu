@@ -215,7 +215,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_sleep_quality_level",
-        name="Sleep Quality Level",
+        name="Sleep Quality (Level)",
         icon="mdi:star-outline",
         source=SOURCE_WELLNESS,
         value_key="sleepQuality",
@@ -307,7 +307,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_fatigue_level",
-        name="Fatigue Level",
+        name="Wellness Fatigue (Level)",
         icon="mdi:run-fast",
         source=SOURCE_WELLNESS,
         value_key="fatigue",
@@ -325,7 +325,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_stress_level",
-        name="Stress Level",
+        name="Stress (Level)",
         icon="mdi:emoticon-confused-outline",
         source=SOURCE_WELLNESS,
         value_key="stress",
@@ -351,7 +351,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_soreness_level",
-        name="Soreness Level",
+        name="Soreness (Level)",
         icon="mdi:arm-flex",
         source=SOURCE_WELLNESS,
         value_key="soreness",
@@ -369,7 +369,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_mood_level",
-        name="Mood Level",
+        name="Mood (Level)",
         icon="mdi:emoticon-outline",
         source=SOURCE_WELLNESS,
         value_key="mood",
@@ -387,7 +387,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_motivation_level",
-        name="Motivation Level",
+        name="Motivation (Level)",
         icon="mdi:rocket-launch-outline",
         source=SOURCE_WELLNESS,
         value_key="motivation",
@@ -405,7 +405,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_injury_level",
-        name="Injury Level",
+        name="Injury (Level)",
         icon="mdi:medical-bag",
         source=SOURCE_WELLNESS,
         value_key="injury",
@@ -468,7 +468,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     ),
     IntervalsIcuSensorDescription(
         key="wellness_hydration_level",
-        name="Hydration Level",
+        name="Hydration (Level)",
         icon="mdi:cup-water",
         source=SOURCE_WELLNESS,
         value_key="hydration",

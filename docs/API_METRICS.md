@@ -89,13 +89,13 @@ When a new day includes `null` values:
 
 The integration also exposes additional text sensors for key wellness scales:
 
-- `Sleep Quality Level`
-- `Soreness Level`
-- `Fatigue Level`
-- `Stress Level`
-- `Mood Level`
-- `Motivation Level`
-- `Injury Level`
-- `Hydration Level`
+- `Sleep Quality (Level)`
+- `Soreness (Level)`
+- `Wellness Fatigue (Level)`
+- `Stress (Level)`
+- `Mood (Level)`
+- `Motivation (Level)`
+- `Injury (Level)`
+- `Hydration (Level)`
 
 These are derived from the numeric wellness fields using Intervals.icu UI-style labels.
