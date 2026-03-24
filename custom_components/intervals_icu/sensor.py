@@ -199,7 +199,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     IntervalsIcuSensorDescription(
         key="wellness_sleep_score",
         name="Sleep Score",
-        icon="mdi:sleep",
+        icon="mdi:star-circle-outline",
         source=SOURCE_WELLNESS,
         value_key="sleepScore",
         state_class=SensorStateClass.MEASUREMENT,
@@ -215,7 +215,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     IntervalsIcuSensorDescription(
         key="wellness_avg_sleeping_hr",
         name="Average Sleeping Heart Rate",
-        icon="mdi:heart",
+        icon="mdi:heart-pulse",
         source=SOURCE_WELLNESS,
         value_key="avgSleepingHR",
         native_unit_of_measurement="bpm",
@@ -224,7 +224,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     IntervalsIcuSensorDescription(
         key="wellness_resting_hr",
         name="Resting Heart Rate",
-        icon="mdi:heart",
+        icon="mdi:heart-pulse",
         source=SOURCE_WELLNESS,
         value_key="restingHR",
         native_unit_of_measurement="bpm",
@@ -233,7 +233,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     IntervalsIcuSensorDescription(
         key="wellness_hrv",
         name="HRV",
-        icon="mdi:heart-pulse",
+        icon="mdi:head-heart-outline",
         source=SOURCE_WELLNESS,
         value_key="hrv",
         state_class=SensorStateClass.MEASUREMENT,
@@ -241,7 +241,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     IntervalsIcuSensorDescription(
         key="wellness_hrv_sdnn",
         name="HRV SDNN",
-        icon="mdi:heart-pulse",
+        icon="mdi:head-heart-outline",
         source=SOURCE_WELLNESS,
         value_key="hrvSDNN",
         state_class=SensorStateClass.MEASUREMENT,
@@ -645,7 +645,7 @@ def _build_wellness_sport_sensor_descriptions(
             IntervalsIcuSensorDescription(
                 key=f"wellness_sport_{key}",
                 name=f"{sport_name} {metric_name}",
-                icon="mdi:chart-line",
+                icon=_sport_metric_icon(metric_slug),
                 source=SOURCE_WELLNESS_SPORT,
                 value_key=key,
                 native_unit_of_measurement=_sport_metric_unit(metric_slug),
@@ -675,6 +675,15 @@ def _sport_metric_unit(metric_slug: str) -> str | None:
     if metric_slug == "w_prime":
         return "J"
     return None
+
+
+def _sport_metric_icon(metric_slug: str) -> str:
+    """Return icon for known sport metrics."""
+    if metric_slug in {"eftp", "p_max"}:
+        return "mdi:lightning-bolt"
+    if metric_slug == "w_prime":
+        return "mdi:battery-high"
+    return "mdi:chart-line"
 
 
 def _data_for_source(data: dict[str, Any], source: str) -> dict[str, Any]:
