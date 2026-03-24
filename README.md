@@ -61,6 +61,11 @@ See:
 
 MIT. See [LICENSE](LICENSE).
 
+### Trademark Notice
+
+Intervals.icu name and logo are property of Intervals.icu and used here for
+identification/compatibility purposes only.
+
 ## References
 
 - Intervals.icu API docs: [intervals.icu/api-docs.html](https://intervals.icu/api-docs.html)
