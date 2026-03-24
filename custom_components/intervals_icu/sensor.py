@@ -27,6 +27,69 @@ SOURCE_SUMMARY = "summary"
 SOURCE_WELLNESS = "wellness"
 SOURCE_WELLNESS_SPORT = "wellness_sport_metrics"
 
+GENERIC_SPORT_ICON = "mdi:trophy-outline"
+SPORT_TYPE_ICONS: dict[str, str] = {
+    "ride": "mdi:bike",
+    "run": "mdi:run",
+    "swim": "mdi:swim",
+    "weighttraining": "mdi:weight-lifter",
+    "hike": "mdi:hiking",
+    "walk": "mdi:walk",
+    "alpineski": "mdi:ski",
+    "backcountryski": "mdi:ski",
+    "badminton": "mdi:badminton",
+    "canoeing": "mdi:kayaking",
+    "crossfit": "mdi:weight-lifter",
+    "ebikeride": "mdi:bike-fast",
+    "emountainbikeride": "mdi:bike-pedal-mountain",
+    "elliptical": "mdi:run-fast",
+    "golf": "mdi:golf",
+    "gravelride": "mdi:bike",
+    "trackride": "mdi:bike",
+    "handcycle": "mdi:bike",
+    "highintensityintervaltraining": "mdi:weight-lifter",
+    "hockey": "mdi:hockey-puck",
+    "iceskate": "mdi:skate",
+    "inlineskate": "mdi:rollerblade",
+    "kayaking": "mdi:kayaking",
+    "kitesurf": "mdi:kitesurfing",
+    "mountainbikeride": "mdi:bike-pedal-mountain",
+    "nordicski": "mdi:ski-cross-country",
+    "openwaterswim": "mdi:swim",
+    "padel": "mdi:tennis",
+    "pilates": "mdi:meditation",
+    "pickleball": "mdi:racquetball",
+    "racquetball": "mdi:racquetball",
+    "rugby": "mdi:rugby",
+    "rockclimbing": "mdi:carabiner",
+    "rollerski": "mdi:ski-cross-country",
+    "rowing": "mdi:rowing",
+    "sail": "mdi:sail-boat",
+    "skateboard": "mdi:skateboard",
+    "snowboard": "mdi:snowboard",
+    "snowshoe": "mdi:snowshoeing",
+    "soccer": "mdi:soccer",
+    "squash": "mdi:racquetball",
+    "stairstepper": "mdi:stairs",
+    "standuppaddling": "mdi:kayaking",
+    "surfing": "mdi:surfing",
+    "tabletennis": "mdi:table-tennis",
+    "tennis": "mdi:tennis",
+    "trailrun": "mdi:run",
+    "transition": "mdi:run-fast",
+    "velomobile": "mdi:bike-fast",
+    "virtualride": "mdi:bike",
+    "virtualrow": "mdi:rowing",
+    "virtualrun": "mdi:run",
+    "virtualski": "mdi:ski",
+    "watersport": "mdi:ski-water",
+    "wheelchair": "mdi:human-wheelchair",
+    "windsurf": "mdi:surfing",
+    "workout": "mdi:dumbbell",
+    "yoga": "mdi:yoga",
+    "other": GENERIC_SPORT_ICON,
+}
+
 
 @dataclass(frozen=True, kw_only=True)
 class IntervalsIcuSensorDescription(SensorEntityDescription):
@@ -728,7 +791,7 @@ def _build_wellness_sport_sensor_descriptions(
             IntervalsIcuSensorDescription(
                 key=f"wellness_sport_{key}",
                 name=f"{sport_name} {metric_name}",
-                icon=_sport_metric_icon(metric_slug),
+                icon=_sport_type_icon(sport_slug),
                 source=SOURCE_WELLNESS_SPORT,
                 value_key=key,
                 native_unit_of_measurement=_sport_metric_unit(metric_slug),
@@ -760,13 +823,9 @@ def _sport_metric_unit(metric_slug: str) -> str | None:
     return None
 
 
-def _sport_metric_icon(metric_slug: str) -> str:
-    """Return icon for known sport metrics."""
-    if metric_slug in {"eftp", "p_max"}:
-        return "mdi:lightning-bolt"
-    if metric_slug == "w_prime":
-        return "mdi:battery-high"
-    return "mdi:chart-line"
+def _sport_type_icon(sport_slug: str) -> str:
+    """Return icon for the Intervals.icu sport type, with generic fallback."""
+    return SPORT_TYPE_ICONS.get(sport_slug, GENERIC_SPORT_ICON)
 
 
 def _data_for_source(data: dict[str, Any], source: str) -> dict[str, Any]:
