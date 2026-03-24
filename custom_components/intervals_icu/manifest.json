@@ -6,9 +6,9 @@
   ],
   "config_flow": true,
   "documentation": "https://github.com/gitviola/hass-intervals-icu",
-  "issue_tracker": "https://github.com/gitviola/hass-intervals-icu/issues",
   "integration_type": "service",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/gitviola/hass-intervals-icu/issues",
   "loggers": [
     "custom_components.intervals_icu"
   ],
