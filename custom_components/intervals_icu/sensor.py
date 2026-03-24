@@ -261,6 +261,14 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
+        key="wellness_sleep_duration_humanized",
+        name="Sleep Duration (Humanized)",
+        icon="mdi:sleep",
+        source=SOURCE_WELLNESS,
+        value_key="sleepSecs",
+        value_transform=lambda value: _format_seconds_as_hours_minutes(value),
+    ),
+    IntervalsIcuSensorDescription(
         key="wellness_sleep_score",
         name="Sleep Score",
         icon="mdi:star-circle-outline",
@@ -846,6 +854,24 @@ def _normalize_sensor_value(value: Any) -> Any:
         return value
 
     return None
+
+
+def _format_seconds_as_hours_minutes(value: Any) -> str | None:
+    """Format duration seconds as a compact '<hours>h <minutes>m' string."""
+    if value is None or isinstance(value, bool):
+        return None
+
+    try:
+        total_seconds = int(value)
+    except (TypeError, ValueError):
+        return None
+
+    if total_seconds < 0:
+        return None
+
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    return f"{hours}h {minutes}m"
 
 
 def _map_scale(value: Any, labels: tuple[str, ...]) -> str | None:
