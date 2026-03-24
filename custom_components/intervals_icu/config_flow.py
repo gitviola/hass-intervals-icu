@@ -94,7 +94,13 @@ class IntervalsIcuConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Return the options flow handler."""
-        return IntervalsIcuOptionsFlow(config_entry)
+        # HA changed options flow construction over time: older cores pass the
+        # config entry in the constructor, newer cores inject `self.config_entry`
+        # automatically. Support both to avoid 500 errors when opening Configure.
+        try:
+            return IntervalsIcuOptionsFlow(config_entry)
+        except TypeError:
+            return IntervalsIcuOptionsFlow()
 
 
 class IntervalsIcuOptionsFlow(config_entries.OptionsFlowWithReload):
