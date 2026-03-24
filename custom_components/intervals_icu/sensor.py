@@ -90,6 +90,69 @@ SPORT_TYPE_ICONS: dict[str, str] = {
     "other": GENERIC_SPORT_ICON,
 }
 
+INTEGER_DISPLAY_PRECISION_KEYS: set[str] = {
+    "summary_fitness",
+    "summary_fatigue",
+    "summary_form",
+    "summary_training_load",
+    "summary_eftp",
+    "summary_session_rpe",
+    "summary_activity_count",
+    "summary_total_time",
+    "summary_moving_time",
+    "summary_elapsed_time",
+    "summary_distance",
+    "summary_total_elevation_gain",
+    "summary_calories",
+    "summary_time_in_zones_total",
+    "wellness_sleep_secs",
+    "wellness_sleep_score",
+    "wellness_sleep_quality",
+    "wellness_avg_sleeping_hr",
+    "wellness_resting_hr",
+    "wellness_hrv",
+    "wellness_hrv_sdnn",
+    "wellness_ctl",
+    "wellness_atl",
+    "wellness_ctl_load",
+    "wellness_atl_load",
+    "wellness_fatigue",
+    "wellness_stress",
+    "wellness_readiness",
+    "wellness_soreness",
+    "wellness_mood",
+    "wellness_motivation",
+    "wellness_injury",
+    "wellness_steps",
+    "wellness_respiration",
+    "wellness_spo2",
+    "wellness_systolic",
+    "wellness_diastolic",
+    "wellness_hydration",
+    "wellness_hydration_volume",
+    "wellness_baevsky_si",
+    "wellness_kcal_consumed",
+    "wellness_carbohydrates",
+    "wellness_protein",
+    "wellness_fat_total",
+}
+
+ONE_DECIMAL_DISPLAY_PRECISION_KEYS: set[str] = {
+    "summary_ramp_rate",
+    "summary_weight",
+    "wellness_ramp_rate",
+    "wellness_weight",
+    "wellness_body_fat",
+    "wellness_abdomen",
+    "wellness_vo2max",
+    "wellness_blood_glucose",
+    "wellness_lactate",
+}
+
+TWO_DECIMAL_DISPLAY_PRECISION_KEYS: set[str] = {
+    "summary_eftp_per_kg",
+}
+
 
 @dataclass(frozen=True, kw_only=True)
 class IntervalsIcuSensorDescription(SensorEntityDescription):
@@ -768,6 +831,7 @@ class IntervalsIcuSensor(CoordinatorEntity[IntervalsIcuCoordinator], SensorEntit
             model="API",
             name=athlete_name,
         )
+        self._attr_suggested_display_precision = _suggested_display_precision(description)
 
     @property
     def native_value(self) -> Any:
@@ -834,6 +898,39 @@ def _sport_metric_unit(metric_slug: str) -> str | None:
 def _sport_type_icon(sport_slug: str) -> str:
     """Return icon for the Intervals.icu sport type, with generic fallback."""
     return SPORT_TYPE_ICONS.get(sport_slug, GENERIC_SPORT_ICON)
+
+
+def _suggested_display_precision(
+    description: IntervalsIcuSensorDescription,
+) -> int | None:
+    """Return display precision hint for numeric sensors."""
+    key = description.key
+
+    if description.state_class is None:
+        return None
+
+    if key.startswith("wellness_sport_"):
+        sport_key = key.removeprefix("wellness_sport_")
+        metric_slug = sport_key.split("__")[-1]
+        return _sport_metric_display_precision(metric_slug)
+
+    if key in INTEGER_DISPLAY_PRECISION_KEYS:
+        return 0
+
+    if key in ONE_DECIMAL_DISPLAY_PRECISION_KEYS:
+        return 1
+
+    if key in TWO_DECIMAL_DISPLAY_PRECISION_KEYS:
+        return 2
+
+    return None
+
+
+def _sport_metric_display_precision(metric_slug: str) -> int:
+    """Return display precision for known sportInfo metrics."""
+    if metric_slug in {"eftp", "p_max", "w_prime"}:
+        return 0
+    return 1
 
 
 def _data_for_source(data: dict[str, Any], source: str) -> dict[str, Any]:
