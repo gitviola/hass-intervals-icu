@@ -225,7 +225,6 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         key="wellness_resting_hr",
         name="Resting Heart Rate",
         icon="mdi:heart",
-        device_class=SensorDeviceClass.HEART_RATE,
         source=SOURCE_WELLNESS,
         value_key="restingHR",
         native_unit_of_measurement="bpm",
