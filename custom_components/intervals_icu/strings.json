@@ -1,0 +1,33 @@
+{
+  "title": "Intervals.icu",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Intervals.icu",
+        "description": "Enter your Intervals.icu API key and athlete id.",
+        "data": {
+          "api_key": "API key",
+          "athlete_id": "Athlete id (use 0 for current athlete)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This athlete is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Intervals.icu options",
+        "data": {
+          "scan_interval_minutes": "Polling interval (minutes)"
+        }
+      }
+    }
+  }
+}
