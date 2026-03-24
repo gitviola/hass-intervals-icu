@@ -84,3 +84,18 @@ When a new day includes `null` values:
   - `steps`
   - nutrition/food fields (`kcalConsumed`, `carbohydrates`, `protein`, `fatTotal`)
   - `hydrationVolume`
+
+## Humanized Scale Sensors
+
+The integration also exposes additional text sensors for key wellness scales:
+
+- `Sleep Quality Level`
+- `Soreness Level`
+- `Fatigue Level`
+- `Stress Level`
+- `Mood Level`
+- `Motivation Level`
+- `Injury Level`
+- `Hydration Level`
+
+These are derived from the numeric wellness fields using Intervals.icu UI-style labels.

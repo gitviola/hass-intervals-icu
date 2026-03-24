@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Callable
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -34,6 +34,7 @@ class IntervalsIcuSensorDescription(SensorEntityDescription):
 
     source: str
     value_key: str
+    value_transform: Callable[[Any], Any] | None = None
 
 
 SUMMARY_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
@@ -213,6 +214,16 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
+        key="wellness_sleep_quality_level",
+        name="Sleep Quality Level",
+        icon="mdi:star-outline",
+        source=SOURCE_WELLNESS,
+        value_key="sleepQuality",
+        value_transform=lambda value: _map_scale(
+            value, ("Great", "Good", "Average", "Poor")
+        ),
+    ),
+    IntervalsIcuSensorDescription(
         key="wellness_avg_sleeping_hr",
         name="Average Sleeping Heart Rate",
         icon="mdi:heart-pulse",
@@ -295,12 +306,32 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
+        key="wellness_fatigue_level",
+        name="Fatigue Level",
+        icon="mdi:run-fast",
+        source=SOURCE_WELLNESS,
+        value_key="fatigue",
+        value_transform=lambda value: _map_scale(
+            value, ("Low", "Average", "High", "Extreme")
+        ),
+    ),
+    IntervalsIcuSensorDescription(
         key="wellness_stress",
         name="Stress",
         icon="mdi:emoticon-confused-outline",
         source=SOURCE_WELLNESS,
         value_key="stress",
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_stress_level",
+        name="Stress Level",
+        icon="mdi:emoticon-confused-outline",
+        source=SOURCE_WELLNESS,
+        value_key="stress",
+        value_transform=lambda value: _map_scale(
+            value, ("Low", "Average", "High", "Extreme")
+        ),
     ),
     IntervalsIcuSensorDescription(
         key="wellness_readiness",
@@ -319,12 +350,32 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
+        key="wellness_soreness_level",
+        name="Soreness Level",
+        icon="mdi:arm-flex",
+        source=SOURCE_WELLNESS,
+        value_key="soreness",
+        value_transform=lambda value: _map_scale(
+            value, ("Low", "Average", "High", "Extreme")
+        ),
+    ),
+    IntervalsIcuSensorDescription(
         key="wellness_mood",
         name="Mood",
         icon="mdi:emoticon-outline",
         source=SOURCE_WELLNESS,
         value_key="mood",
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_mood_level",
+        name="Mood Level",
+        icon="mdi:emoticon-outline",
+        source=SOURCE_WELLNESS,
+        value_key="mood",
+        value_transform=lambda value: _map_scale(
+            value, ("Great", "Good", "OK", "Grumpy")
+        ),
     ),
     IntervalsIcuSensorDescription(
         key="wellness_motivation",
@@ -335,12 +386,32 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
+        key="wellness_motivation_level",
+        name="Motivation Level",
+        icon="mdi:rocket-launch-outline",
+        source=SOURCE_WELLNESS,
+        value_key="motivation",
+        value_transform=lambda value: _map_scale(
+            value, ("Extreme", "High", "Average", "Low")
+        ),
+    ),
+    IntervalsIcuSensorDescription(
         key="wellness_injury",
         name="Injury",
         icon="mdi:medical-bag",
         source=SOURCE_WELLNESS,
         value_key="injury",
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_injury_level",
+        name="Injury Level",
+        icon="mdi:medical-bag",
+        source=SOURCE_WELLNESS,
+        value_key="injury",
+        value_transform=lambda value: _map_scale(
+            value, ("None", "Niggle", "Poor", "Injured")
+        ),
     ),
     IntervalsIcuSensorDescription(
         key="wellness_steps",
@@ -394,6 +465,16 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         source=SOURCE_WELLNESS,
         value_key="hydration",
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hydration_level",
+        name="Hydration Level",
+        icon="mdi:cup-water",
+        source=SOURCE_WELLNESS,
+        value_key="hydration",
+        value_transform=lambda value: _map_scale(
+            value, ("Good", "OK", "Poor", "Bad")
+        ),
     ),
     IntervalsIcuSensorDescription(
         key="wellness_hydration_volume",
@@ -622,6 +703,8 @@ class IntervalsIcuSensor(CoordinatorEntity[IntervalsIcuCoordinator], SensorEntit
         """Return the current sensor value."""
         source = _data_for_source(self.coordinator.data, self.entity_description.source)
         value = source.get(self.entity_description.value_key)
+        if self.entity_description.value_transform is not None:
+            value = self.entity_description.value_transform(value)
         return _normalize_sensor_value(value)
 
 
@@ -703,4 +786,22 @@ def _normalize_sensor_value(value: Any) -> Any:
     if isinstance(value, (str, int, float, date, datetime, Decimal)):
         return value
 
+    return None
+
+
+def _map_scale(value: Any, labels: tuple[str, ...]) -> str | None:
+    """Map numeric scale values used by Intervals.icu to human-friendly labels."""
+    if value is None or isinstance(value, bool):
+        return None
+
+    try:
+        numeric = int(value)
+    except (TypeError, ValueError):
+        return None
+
+    # Intervals fields may be 1-based (1..N). Some integrations emit 0-based values.
+    if 1 <= numeric <= len(labels):
+        return labels[numeric - 1]
+    if 0 <= numeric < len(labels):
+        return labels[numeric]
     return None
