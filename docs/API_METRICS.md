@@ -121,11 +121,12 @@ These are derived from the numeric wellness fields using Intervals.icu UI-style 
 
 The integration also derives Garmin-like HRV status outputs from overnight wellness HRV:
 
-- `HRV Status` (rolling 7-day mean, min 6 samples)
+- `Overnight HRV` (latest overnight HRV value from Intervals wellness `hrv`)
+- `HRV Status (7-Day Avg)` (rolling 7-day mean of overnight HRV, min 6 samples)
 - `HRV Status (Level)` (`Balanced`, `Unbalanced`, `Low`, `Poor`, `No status`)
-- `HRV Baseline Lower` (rolling 21-day personal baseline low bound, min 18 samples)
-- `HRV Baseline Upper` (rolling 21-day personal baseline high bound, min 18 samples)
-- `HRV Low Threshold` (well-below-baseline cutoff)
+- `HRV Baseline Lower` (personal baseline low bound from lagged long-window overnight HRV percentiles)
+- `HRV Baseline Upper` (personal baseline high bound from lagged long-window overnight HRV percentiles)
+- `HRV Low Threshold (7-Day Avg)` (well-below-baseline cutoff below lower baseline bound)
 
 Status semantics:
 - `Balanced`: status value is inside baseline range.
@@ -137,3 +138,9 @@ Status semantics:
 Efficiency semantics:
 - Uses coordinator-side source fingerprinting and cache reuse when wellness HRV inputs are unchanged.
 - Recomputes derivation when new or corrected wellness HRV values are detected.
+
+Current baseline derivation shape:
+- Baseline window: 56 days of overnight HRV history.
+- Baseline lag: 4 days (reduces immediate pull from very recent overnight dips/spikes).
+- Baseline bounds: 40th and 95th percentiles of the lagged window.
+- Low threshold: below baseline lower bound by at least 2 ms (or 25% of baseline width, whichever is larger).

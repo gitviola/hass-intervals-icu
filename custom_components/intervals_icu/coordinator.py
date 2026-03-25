@@ -28,8 +28,13 @@ from .const import (
     CONF_SCAN_INTERVAL_MINUTES,
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DOMAIN,
+    HRV_BASELINE_LAG_DAYS,
+    HRV_BASELINE_LOWER_PERCENTILE,
     HRV_BASELINE_MIN_SAMPLES,
+    HRV_BASELINE_UPPER_PERCENTILE,
     HRV_BASELINE_WINDOW_DAYS,
+    HRV_LOW_CUTOFF_MIN_DELTA_MS,
+    HRV_LOW_CUTOFF_RANGE_FACTOR,
     HRV_POOR_PERSISTENCE_DAYS,
     HRV_STATUS_BOOTSTRAP_DAYS,
     HRV_STATUS_MIN_SAMPLES,
@@ -542,12 +547,22 @@ def _derive_hrv_point_for_day(
 ) -> dict[str, Any]:
     """Derive one day of Garmin-like HRV status output."""
     values_7d = _window_values(samples_by_date, day, HRV_STATUS_WINDOW_DAYS)
-    values_21d = _window_values(samples_by_date, day, HRV_BASELINE_WINDOW_DAYS)
+    values_baseline = _window_values(
+        samples_by_date,
+        day,
+        HRV_BASELINE_WINDOW_DAYS,
+        lag_days=HRV_BASELINE_LAG_DAYS,
+    )
 
     sample_count_7d = len(values_7d)
-    sample_count_21d = len(values_21d)
+    sample_count_baseline = len(values_baseline)
 
-    if sample_count_7d < HRV_STATUS_MIN_SAMPLES or sample_count_21d < HRV_BASELINE_MIN_SAMPLES:
+    # Allow early bootstrap if lagged window does not yet have enough samples.
+    if sample_count_baseline < HRV_BASELINE_MIN_SAMPLES:
+        values_baseline = _window_values(samples_by_date, day, HRV_BASELINE_WINDOW_DAYS)
+        sample_count_baseline = len(values_baseline)
+
+    if sample_count_7d < HRV_STATUS_MIN_SAMPLES or sample_count_baseline < HRV_BASELINE_MIN_SAMPLES:
         return {
             "value": None,
             "baseline_mean": None,
@@ -559,17 +574,43 @@ def _derive_hrv_point_for_day(
             "level": _HRV_LEVEL_NO_STATUS,
             "source_status": _HRV_SOURCE_STATUS_INSUFFICIENT,
             "sample_count_7d": sample_count_7d,
-            "sample_count_21d": sample_count_21d,
+            "sample_count_baseline": sample_count_baseline,
             "_poor_candidate": False,
             "_poor_streak": 0,
         }
 
     status_value = mean(values_7d)
-    baseline_mean = mean(values_21d)
-    baseline_sd = stdev(values_21d)
-    baseline_low = baseline_mean - (0.5 * baseline_sd)
-    baseline_high = baseline_mean + (0.5 * baseline_sd)
-    low_cutoff = baseline_mean - baseline_sd
+    baseline_mean = mean(values_baseline)
+    baseline_sd = stdev(values_baseline) if len(values_baseline) > 1 else 0.0
+    baseline_low = _percentile(values_baseline, HRV_BASELINE_LOWER_PERCENTILE)
+    baseline_high = _percentile(values_baseline, HRV_BASELINE_UPPER_PERCENTILE)
+
+    if baseline_low is None or baseline_high is None:
+        return {
+            "value": None,
+            "baseline_mean": None,
+            "baseline_sd": None,
+            "baseline_low": None,
+            "baseline_high": None,
+            "low_cutoff": None,
+            "age_norm_lower_bound": None,
+            "level": _HRV_LEVEL_NO_STATUS,
+            "source_status": _HRV_SOURCE_STATUS_INSUFFICIENT,
+            "sample_count_7d": sample_count_7d,
+            "sample_count_baseline": sample_count_baseline,
+            "_poor_candidate": False,
+            "_poor_streak": 0,
+        }
+
+    if baseline_high < baseline_low:
+        baseline_high = baseline_low
+
+    baseline_range = max(0.0, baseline_high - baseline_low)
+    low_delta = max(
+        HRV_LOW_CUTOFF_MIN_DELTA_MS,
+        baseline_range * HRV_LOW_CUTOFF_RANGE_FACTOR,
+    )
+    low_cutoff = baseline_low - low_delta
 
     age_norm_lower_bound = _age_norm_lower_bound(day=day, birthdate=birthdate, sex=sex)
     poor_candidate = (
@@ -600,7 +641,7 @@ def _derive_hrv_point_for_day(
         "level": level,
         "source_status": _HRV_SOURCE_STATUS_OK,
         "sample_count_7d": sample_count_7d,
-        "sample_count_21d": sample_count_21d,
+        "sample_count_baseline": sample_count_baseline,
         "_poor_candidate": poor_candidate,
         "_poor_streak": poor_streak,
     }
@@ -610,14 +651,38 @@ def _window_values(
     samples_by_date: dict[date, float],
     end_day: date,
     window_days: int,
+    *,
+    lag_days: int = 0,
 ) -> list[float]:
     """Collect sample values in a trailing calendar-day window."""
-    start_day = end_day - timedelta(days=window_days - 1)
+    effective_end_day = end_day - timedelta(days=lag_days)
+    start_day = effective_end_day - timedelta(days=window_days - 1)
     return [
         value
         for sample_day, value in samples_by_date.items()
-        if start_day <= sample_day <= end_day
+        if start_day <= sample_day <= effective_end_day
     ]
+
+
+def _percentile(values: list[float], percentile: float) -> float | None:
+    """Return percentile via linear interpolation (inclusive endpoints)."""
+    if not values:
+        return None
+
+    ordered = sorted(values)
+    if percentile <= 0:
+        return ordered[0]
+    if percentile >= 100:
+        return ordered[-1]
+
+    index = (len(ordered) - 1) * (percentile / 100.0)
+    low_index = math.floor(index)
+    high_index = math.ceil(index)
+    if low_index == high_index:
+        return ordered[low_index]
+
+    fraction = index - low_index
+    return ordered[low_index] + (ordered[high_index] - ordered[low_index]) * fraction
 
 
 def _build_hrv_status_payload(
@@ -657,11 +722,16 @@ def _build_hrv_status_payload(
         "calculation_date": latest_date.isoformat(),
         "source_status": source_status,
         "sample_count_7d": int(latest_point.get("sample_count_7d") or 0),
-        "sample_count_21d": int(latest_point.get("sample_count_21d") or 0),
+        "sample_count_baseline": int(latest_point.get("sample_count_baseline") or 0),
+        # Keep legacy key for backward-compatible attribute consumers.
+        "sample_count_21d": int(latest_point.get("sample_count_baseline") or 0),
         "age_norm_lower_bound": latest_point.get("age_norm_lower_bound"),
         "cache_hit": cache_hit,
         "status_window_days": HRV_STATUS_WINDOW_DAYS,
         "baseline_window_days": HRV_BASELINE_WINDOW_DAYS,
+        "baseline_lag_days": HRV_BASELINE_LAG_DAYS,
+        "baseline_lower_percentile": HRV_BASELINE_LOWER_PERCENTILE,
+        "baseline_upper_percentile": HRV_BASELINE_UPPER_PERCENTILE,
         "poor_persistence_days": HRV_POOR_PERSISTENCE_DAYS,
         "baseline_suppressed": baseline_suppressed,
         "birthdate_source": birthdate_source,
@@ -683,11 +753,15 @@ def _hrv_status_empty_payload(*, source_error: str | None) -> dict[str, Any]:
         "calculation_date": None,
         "source_status": _HRV_SOURCE_STATUS_ERROR if source_error else _HRV_SOURCE_STATUS_INSUFFICIENT,
         "sample_count_7d": 0,
+        "sample_count_baseline": 0,
         "sample_count_21d": 0,
         "age_norm_lower_bound": None,
         "cache_hit": False,
         "status_window_days": HRV_STATUS_WINDOW_DAYS,
         "baseline_window_days": HRV_BASELINE_WINDOW_DAYS,
+        "baseline_lag_days": HRV_BASELINE_LAG_DAYS,
+        "baseline_lower_percentile": HRV_BASELINE_LOWER_PERCENTILE,
+        "baseline_upper_percentile": HRV_BASELINE_UPPER_PERCENTILE,
         "poor_persistence_days": HRV_POOR_PERSISTENCE_DAYS,
         "baseline_suppressed": False,
         "birthdate_source": "unavailable",

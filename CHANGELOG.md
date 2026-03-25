@@ -7,6 +7,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Reworked Garmin-like HRV baseline derivation to a lagged long-window model:
+  56-day overnight history, 4-day lag, percentile bounds (40th/95th), and an
+  explicit low-threshold offset from baseline width.
+- Renamed HRV entities for clarity of source semantics:
+  - `HRV` -> `Overnight HRV`
+  - `HRV Status` -> `HRV Status (7-Day Avg)`
+  - `HRV Low Threshold` -> `HRV Low Threshold (7-Day Avg)`
+- Expanded HRV status attributes with baseline derivation metadata
+  (`sample_count_baseline`, baseline lag/percentiles) while keeping legacy
+  `sample_count_21d` for compatibility.
+
+### Added
+
+- Added fixture-driven regression coverage to validate Garmin CSV-like baseline
+  range behavior and guard against baseline drift regressions.
+
 ## [0.7.0] - 2026-03-25
 
 ### Added

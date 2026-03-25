@@ -33,9 +33,10 @@ Authentication model:
 - Summary metrics (fitness, fatigue, form, training load, eFTP, ramp rate, etc.)
 - Wellness metrics (including sleep duration, sleep score, sleep quality)
 - Garmin-like derived HRV status metrics:
-  - `HRV Status` (numeric rolling status)
+  - `Overnight HRV` (latest overnight value from Intervals wellness)
+  - `HRV Status (7-Day Avg)` (numeric rolling status)
   - `HRV Status (Level)` (`Balanced`/`Unbalanced`/`Low`/`Poor`/`No status`)
-  - `HRV Baseline Lower`, `HRV Baseline Upper`, `HRV Low Threshold`
+  - `HRV Baseline Lower`, `HRV Baseline Upper`, `HRV Low Threshold (7-Day Avg)`
 - Dynamic sport wellness metrics from `sportInfo` (for example Ride/Run eFTP, W Prime, P Max)
 - Null rollover logic for persistent metrics (for example HRV, VO2max, resting HR, weight)
 

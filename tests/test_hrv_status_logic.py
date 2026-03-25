@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 from datetime import date, datetime, timedelta
 import enum
 import importlib
@@ -152,6 +153,34 @@ def _build_hrv_rows(
     return rows
 
 
+def _load_garmin_csv_fixture() -> tuple[list[dict], dict[date, tuple[int, int, int]]]:
+    """Load Garmin-export fixture and map expected rounded outputs by day."""
+    fixture_path = REPO_ROOT / "tests" / "fixtures" / "garmin_hrv_status.csv"
+    rows: list[dict] = []
+    expected: dict[date, tuple[int, int, int]] = {}
+
+    with fixture_path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            day = datetime.strptime(f"{row['Date']} 2026", "%d %b %Y").date()
+            overnight = float(str(row["Overnight HRV"]).replace("ms", "").strip())
+            baseline_low_raw, baseline_high_raw = str(row["Baseline"]).split("-")
+            baseline_low = int(round(float(baseline_low_raw.replace("ms", "").strip())))
+            baseline_high = int(round(float(baseline_high_raw.replace("ms", "").strip())))
+            status_avg = int(round(float(str(row["7d Avg"]).replace("ms", "").strip())))
+
+            rows.append(
+                {
+                    "id": day.isoformat(),
+                    "hrv": overnight,
+                    "updated": f"{day.isoformat()}T06:00:00Z",
+                }
+            )
+            expected[day] = (baseline_low, baseline_high, status_avg)
+
+    return rows, expected
+
+
 class _FakeApi:
     """Simple API stub used for coordinator init in pure-logic tests."""
 
@@ -297,6 +326,44 @@ class HrvStatusDerivationTests(unittest.TestCase):
         )
 
         self.assertEqual(payload["birthdate_source"], "option")
+
+    def test_garmin_fixture_baseline_and_status_stay_close(self) -> None:
+        rows, expected = _load_garmin_csv_fixture()
+        coordinator = self._coordinator()
+
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "MALE", "icu_date_of_birth": "1990-01-01"},
+            wellness_rows=rows,
+            source_error=None,
+        )
+
+        self.assertEqual(round(float(payload["value"])), expected[date(2026, 3, 25)][2])
+        self.assertEqual(round(float(payload["baseline_high"])), expected[date(2026, 3, 25)][1])
+        self.assertIn(
+            round(float(payload["baseline_low"])),
+            (expected[date(2026, 3, 25)][0], expected[date(2026, 3, 25)][0] + 1),
+        )
+
+        samples_by_date = self.mod._normalize_wellness_hrv_samples(rows)
+        ordered_dates = sorted(samples_by_date)
+        points_by_date, _ = coordinator._derive_hrv_points(
+            ordered_dates=ordered_dates,
+            samples_by_date=samples_by_date,
+            birthdate=date(1990, 1, 1),
+            sex="male",
+        )
+
+        for day in (
+            date(2026, 3, 21),
+            date(2026, 3, 22),
+            date(2026, 3, 23),
+            date(2026, 3, 24),
+            date(2026, 3, 25),
+        ):
+            point = points_by_date[day]
+            expected_low, expected_high, _ = expected[day]
+            self.assertLessEqual(abs(round(float(point["baseline_low"])) - expected_low), 1)
+            self.assertLessEqual(abs(round(float(point["baseline_high"])) - expected_high), 1)
 
 
 if __name__ == "__main__":
