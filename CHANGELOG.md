@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-03-25
+
 ### Changed
 
 - Reworked Garmin-like HRV baseline derivation to a lagged long-window model:
@@ -141,7 +143,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.1
 [0.7.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.0
 [0.6.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.6.0
 [0.5.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.5.0
