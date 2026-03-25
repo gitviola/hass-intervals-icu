@@ -917,6 +917,8 @@ class IntervalsIcuSensor(CoordinatorEntity[IntervalsIcuCoordinator], SensorEntit
         if self.entity_description.source == SOURCE_WELLNESS_HRV_STATUS:
             source = _data_for_source(self.coordinator.data, SOURCE_WELLNESS_HRV_STATUS)
             attrs = _hrv_status_attributes(source)
+            if self.entity_description.key != "wellness_hrv_status":
+                attrs.pop("history_28d", None)
             return attrs or None
 
         return None
@@ -1090,6 +1092,7 @@ def _hrv_status_attributes(source: dict[str, Any]) -> dict[str, Any]:
         "sex",
         "recompute_mode",
         "points_total",
+        "history_28d",
         "error",
     ):
         value = source.get(key)

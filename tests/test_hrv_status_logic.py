@@ -281,6 +281,19 @@ class HrvStatusDerivationTests(unittest.TestCase):
         self.assertEqual(payload["level"], "no_status")
         self.assertEqual(payload["source_status"], "insufficient_data")
 
+    def test_empty_source_has_empty_history_28d(self) -> None:
+        coordinator = self._coordinator()
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "FEMALE", "icu_date_of_birth": "1992-03-01"},
+            wellness_rows=[],
+            source_error=None,
+        )
+
+        self.assertEqual(payload["level"], "no_status")
+        self.assertEqual(payload["source_status"], "insufficient_data")
+        self.assertEqual(payload["history_28d"]["v"], 1)
+        self.assertEqual(payload["history_28d"]["d"], [])
+
     def test_cache_hit_on_unchanged_source_and_incremental_on_change(self) -> None:
         values = [58] * 30
         rows = _build_hrv_rows(start_day=date(2026, 1, 1), values=values)
@@ -328,6 +341,30 @@ class HrvStatusDerivationTests(unittest.TestCase):
         )
 
         self.assertEqual(payload["birthdate_source"], "option")
+
+    def test_history_28d_attribute_is_compact_and_aligned(self) -> None:
+        values = [52 + (idx % 6) for idx in range(40)]
+        rows = _build_hrv_rows(start_day=date(2026, 1, 1), values=values)
+
+        coordinator = self._coordinator()
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "MALE", "icu_date_of_birth": "1990-01-01"},
+            wellness_rows=rows,
+            source_error=None,
+        )
+
+        history = payload["history_28d"]
+        self.assertEqual(set(history), {"v", "d", "o", "s", "bl", "bh", "lv"})
+        self.assertEqual(history["v"], 1)
+        self.assertEqual(len(history["d"]), 28)
+        self.assertEqual(history["d"][-1], rows[-1]["id"])
+
+        for key in ("o", "s", "bl", "bh", "lv"):
+            self.assertEqual(len(history[key]), len(history["d"]))
+
+        self.assertEqual(history["o"][-1], float(rows[-1]["hrv"]))
+        self.assertAlmostEqual(float(history["s"][-1]), float(payload["value"]), places=2)
+        self.assertIn(str(history["lv"][-1]), {"b", "u", "l", "p", "n"})
 
     def test_garmin_fixture_baseline_and_status_stay_close(self) -> None:
         rows, expected = _load_garmin_csv_fixture()

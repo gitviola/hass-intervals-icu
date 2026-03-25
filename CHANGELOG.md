@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed development compose file from `docker-compose.yml` to `compose.yml`.
+
+### Added
+
+- Added compact `history_28d` attribute on `HRV Status (7-Day Avg)` for
+  chart-ready bootstrap data (dates, overnight HRV, 7-day status, baseline
+  lower/upper, and compact level codes).
+
 ## [0.7.2] - 2026-03-25
 
 ### Changed

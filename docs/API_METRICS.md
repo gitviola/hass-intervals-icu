@@ -138,6 +138,14 @@ Status semantics:
 Efficiency semantics:
 - Uses coordinator-side source fingerprinting and cache reuse when wellness HRV inputs are unchanged.
 - Recomputes derivation when new or corrected wellness HRV values are detected.
+- `HRV Status (7-Day Avg)` exposes a compact `history_28d` attribute for charting bootstrap:
+  - `v`: schema version
+  - `d`: ISO dates (max 28)
+  - `o`: overnight HRV values
+  - `s`: 7-day status values
+  - `bl`: baseline lower values
+  - `bh`: baseline upper values
+  - `lv`: compact status codes (`b`, `u`, `l`, `p`, `n`)
 
 Current baseline derivation shape:
 - Baseline window: 28 days of overnight HRV history.

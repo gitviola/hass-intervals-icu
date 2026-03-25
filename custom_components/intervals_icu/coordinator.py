@@ -36,6 +36,7 @@ from .const import (
     HRV_LOW_CUTOFF_MIN_DELTA_MS,
     HRV_LOW_CUTOFF_RANGE_FACTOR,
     HRV_POOR_PERSISTENCE_DAYS,
+    HRV_STATUS_HISTORY_DAYS,
     HRV_STATUS_BOOTSTRAP_DAYS,
     HRV_STATUS_MIN_SAMPLES,
     HRV_STATUS_WINDOW_DAYS,
@@ -73,6 +74,14 @@ _HRV_SOURCE_STATUS_INSUFFICIENT = "insufficient_data"
 _HRV_SOURCE_STATUS_ERROR = "error"
 
 _HRV_BASELINE_SUPPRESS_WHEN_POOR = True
+
+_HRV_LEVEL_COMPACT_CODES = {
+    _HRV_LEVEL_BALANCED: "b",
+    _HRV_LEVEL_UNBALANCED: "u",
+    _HRV_LEVEL_LOW: "l",
+    _HRV_LEVEL_POOR: "p",
+    _HRV_LEVEL_NO_STATUS: "n",
+}
 
 _AGE_NORM_LOWER_BOUNDS_BY_SEX: dict[str, tuple[tuple[int, int, float], ...]] = {
     "female": (
@@ -330,6 +339,11 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 else "incremental"
             ),
             points_total=len(points_by_date),
+        )
+        payload["history_28d"] = _build_hrv_history_28d(
+            ordered_dates=ordered_dates,
+            samples_by_date=samples_by_date,
+            points_by_date=points_by_date,
         )
 
         self._hrv_status_cache = {
@@ -742,6 +756,59 @@ def _build_hrv_status_payload(
     }
 
 
+def _build_hrv_history_28d(
+    *,
+    ordered_dates: list[date],
+    samples_by_date: dict[date, float],
+    points_by_date: dict[date, dict[str, Any]],
+) -> dict[str, Any]:
+    """Build compact 28-day chart history for frontend rendering.
+
+    Structure is intentionally short-keyed to reduce attribute payload size.
+    """
+    recent_dates = ordered_dates[-HRV_STATUS_HISTORY_DAYS:]
+
+    history_dates: list[str] = []
+    overnight_values: list[float | None] = []
+    status_values: list[float | None] = []
+    baseline_lows: list[float | None] = []
+    baseline_highs: list[float | None] = []
+    level_codes: list[str] = []
+
+    for day in recent_dates:
+        point = points_by_date.get(day, {})
+        level = str(point.get("level") or _HRV_LEVEL_NO_STATUS)
+        history_dates.append(day.isoformat())
+        overnight_values.append(_round_history_value(samples_by_date.get(day)))
+        status_values.append(_round_history_value(point.get("value")))
+        baseline_lows.append(_round_history_value(point.get("baseline_low")))
+        baseline_highs.append(_round_history_value(point.get("baseline_high")))
+        level_codes.append(_HRV_LEVEL_COMPACT_CODES.get(level, "n"))
+
+    return {
+        "v": 1,
+        "d": history_dates,
+        "o": overnight_values,
+        "s": status_values,
+        "bl": baseline_lows,
+        "bh": baseline_highs,
+        "lv": level_codes,
+    }
+
+
+def _round_history_value(value: Any) -> float | None:
+    """Return compact float representation for chart history attributes."""
+    if value is None or isinstance(value, bool):
+        return None
+
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return round(numeric, 2)
+
+
 def _hrv_status_empty_payload(*, source_error: str | None) -> dict[str, Any]:
     """Return default payload when no HRV samples are available."""
     return {
@@ -768,6 +835,15 @@ def _hrv_status_empty_payload(*, source_error: str | None) -> dict[str, Any]:
         "sex": "unknown",
         "recompute_mode": "full",
         "points_total": 0,
+        "history_28d": {
+            "v": 1,
+            "d": [],
+            "o": [],
+            "s": [],
+            "bl": [],
+            "bh": [],
+            "lv": [],
+        },
         "error": source_error,
     }
 
