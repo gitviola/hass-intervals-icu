@@ -1072,8 +1072,20 @@ def _daily_activity_attributes(source: dict[str, Any]) -> dict[str, Any]:
 def _hrv_status_attributes(source: dict[str, Any]) -> dict[str, Any]:
     """Return curated attributes for HRV status and baseline entities."""
     attrs: dict[str, Any] = {}
+    level = source.get("level")
+    if level is not None:
+        attrs["level"] = level
+
+    hrv_attr_present = False
+    for key in ("overnight_hrv", "hrv_7d_avg"):
+        value = source.get(key)
+        if value is not None:
+            attrs[key] = value
+            hrv_attr_present = True
+    if hrv_attr_present:
+        attrs["hrv_unit"] = "ms"
+
     for key in (
-        "level",
         "calculation_date",
         "source_status",
         "sample_count_7d",

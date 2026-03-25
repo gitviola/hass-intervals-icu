@@ -329,6 +329,7 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         payload = _build_hrv_status_payload(
             latest_date=latest_date,
             latest_point=latest_point,
+            overnight_hrv=samples_by_date.get(latest_date),
             source_error=source_error,
             cache_hit=False,
             birthdate_source=birthdate_source,
@@ -703,6 +704,7 @@ def _build_hrv_status_payload(
     *,
     latest_date: date,
     latest_point: dict[str, Any],
+    overnight_hrv: float | None,
     source_error: str | None,
     cache_hit: bool,
     birthdate_source: str,
@@ -729,6 +731,8 @@ def _build_hrv_status_payload(
 
     return {
         "value": latest_point.get("value"),
+        "hrv_7d_avg": latest_point.get("value"),
+        "overnight_hrv": overnight_hrv,
         "level": level,
         "baseline_low": baseline_low,
         "baseline_high": baseline_high,
@@ -813,6 +817,8 @@ def _hrv_status_empty_payload(*, source_error: str | None) -> dict[str, Any]:
     """Return default payload when no HRV samples are available."""
     return {
         "value": None,
+        "hrv_7d_avg": None,
+        "overnight_hrv": None,
         "level": _HRV_LEVEL_NO_STATUS,
         "baseline_low": None,
         "baseline_high": None,

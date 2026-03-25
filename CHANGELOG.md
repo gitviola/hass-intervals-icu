@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-03-25
+
+### Added
+
+- Added HRV status attributes for tile-card customization:
+  `overnight_hrv`, `hrv_7d_avg`, and shared `hrv_unit` (`ms`).
+
 ## [0.7.3] - 2026-03-25
 
 ### Changed
@@ -172,7 +179,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.0
 [0.7.3]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.3
 [0.7.2]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.2
 [0.7.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.1
