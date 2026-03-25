@@ -1,0 +1,74 @@
+set_wellness:
+  name: Set wellness
+  description: >
+    Update one or more Intervals.icu wellness values. Only provided fields are
+    sent, omitted fields are left unchanged in Intervals.icu.
+  fields:
+    date:
+      name: Date
+      description: >
+        Target date in YYYY-MM-DD format. Defaults to today's local date in
+        Home Assistant when omitted.
+      example: "2026-03-25"
+      selector:
+        date:
+    weight:
+      name: Weight
+      description: Body weight in kg.
+      example: 72.4
+      selector:
+        number:
+          min: 0
+          max: 400
+          step: 0.1
+          mode: box
+    kcal_consumed:
+      name: Calories consumed
+      description: Calories consumed for the date.
+      example: 2450
+      selector:
+        number:
+          min: 0
+          max: 15000
+          step: 1
+          mode: box
+    carbohydrates:
+      name: Carbohydrates
+      description: Carbohydrates consumed in grams.
+      example: 240
+      selector:
+        number:
+          min: 0
+          max: 2000
+          step: 0.1
+          mode: box
+    protein:
+      name: Protein
+      description: Protein consumed in grams.
+      example: 160
+      selector:
+        number:
+          min: 0
+          max: 2000
+          step: 0.1
+          mode: box
+    fat_total:
+      name: Fat
+      description: Fat consumed in grams.
+      example: 75
+      selector:
+        number:
+          min: 0
+          max: 2000
+          step: 0.1
+          mode: box
+    hydration_volume:
+      name: Hydration volume
+      description: Hydration volume in ml.
+      example: 2500
+      selector:
+        number:
+          min: 0
+          max: 30000
+          step: 1
+          mode: box

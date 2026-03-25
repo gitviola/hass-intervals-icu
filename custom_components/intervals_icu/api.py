@@ -78,11 +78,28 @@ class IntervalsIcuApiClient:
             raise IntervalsIcuApiError("Unexpected wellness list response format")
         return [row for row in data if isinstance(row, dict)]
 
+    async def update_wellness_record(
+        self,
+        athlete_id: str,
+        record_date: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Partially update a wellness record for a date."""
+        data = await self._request_json(
+            "PUT",
+            f"/api/v1/athlete/{athlete_id}/wellness/{quote(record_date, safe='')}",
+            json_body=payload,
+        )
+        if not isinstance(data, dict):
+            raise IntervalsIcuApiError("Unexpected wellness update response format")
+        return data
+
     async def _request_json(
         self,
         method: str,
         path: str,
         params: dict[str, Any] | None = None,
+        json_body: Any = None,
     ) -> Any:
         """Run an authenticated request and parse JSON response."""
         url = f"{API_BASE_URL}{path}"
@@ -93,6 +110,7 @@ class IntervalsIcuApiClient:
                 url,
                 auth=self._auth,
                 params=params,
+                json=json_body,
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as response:
                 if response.status in (401, 403):

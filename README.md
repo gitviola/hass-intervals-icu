@@ -38,6 +38,45 @@ Authentication model:
 Full metric inventory:
 - [API metrics list](docs/API_METRICS.md)
 
+## Action: set wellness
+
+The integration exposes `intervals_icu.set_wellness` for writing a subset of
+wellness fields back to Intervals.icu.
+
+Rules:
+- If `date` is omitted, Home Assistant local `today` is used.
+- Only provided fields are sent; omitted fields are not changed.
+- At least one writable field is required.
+
+Writable fields:
+- `weight`
+- `kcal_consumed`
+- `carbohydrates`
+- `protein`
+- `fat_total`
+- `hydration_volume`
+
+Example (today):
+
+```yaml
+action: intervals_icu.set_wellness
+data:
+  weight: 72.4
+  protein: 160
+  carbohydrates: 240
+```
+
+Example (explicit date):
+
+```yaml
+action: intervals_icu.set_wellness
+data:
+  date: "2026-03-24"
+  kcal_consumed: 2450
+  fat_total: 75
+  hydration_volume: 2500
+```
+
 ## Development
 
 ### Local check
