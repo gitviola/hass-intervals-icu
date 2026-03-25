@@ -97,11 +97,49 @@ data:
 python3 -m compileall custom_components/intervals_icu
 ```
 
-### Manual install for local testing
+### Local Home Assistant (Docker dev mode)
 
-Copy this folder into Home Assistant config:
+Run Home Assistant locally with this integration bind-mounted for fast manual
+testing.
 
-`<config>/custom_components/intervals_icu`
+1. Create local Home Assistant state dir (fully git-ignored):
+
+```bash
+mkdir -p .homeassistant
+```
+
+2. Start Home Assistant:
+
+```bash
+docker compose up -d homeassistant
+```
+
+3. Open http://localhost:8123 and complete onboarding.
+4. Add **Intervals.icu** in Home Assistant.
+
+Notes:
+- Integration source is mounted directly from `custom_components/intervals_icu`
+  to `/config/custom_components/intervals_icu` in the container.
+- No copy step is needed for code changes.
+- Python bytecode cache is disabled (`PYTHONDONTWRITEBYTECODE=1`) to reduce
+  stale cache issues while iterating.
+- Most Python/backend changes require a Home Assistant restart:
+
+```bash
+docker compose restart homeassistant
+```
+
+- Stream logs:
+
+```bash
+docker compose logs -f homeassistant
+```
+
+- Stop local Home Assistant:
+
+```bash
+docker compose down
+```
 
 ## Publishing checklist
 

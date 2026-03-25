@@ -1,0 +1,18 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - type: bind
+        source: ./.homeassistant
+        target: /config
+        consistency: consistent
+      - type: bind
+        source: ./custom_components/intervals_icu
+        target: /config/custom_components/intervals_icu
+        consistency: consistent
