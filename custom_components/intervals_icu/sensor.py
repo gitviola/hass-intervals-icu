@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
@@ -1078,9 +1078,10 @@ def _hrv_status_attributes(source: dict[str, Any]) -> dict[str, Any]:
 
     hrv_attr_present = False
     for key in ("overnight_hrv", "hrv_7d_avg"):
-        value = source.get(key)
+        value = _round_hrv_attribute_value(source.get(key))
         if value is not None:
             attrs[key] = value
+            attrs[f"{key}_with_unit"] = f"{value} ms"
             hrv_attr_present = True
     if hrv_attr_present:
         attrs["hrv_unit"] = "ms"
@@ -1111,6 +1112,19 @@ def _hrv_status_attributes(source: dict[str, Any]) -> dict[str, Any]:
         if value is not None:
             attrs[key] = value
     return attrs
+
+
+def _round_hrv_attribute_value(value: Any) -> int | None:
+    """Round HRV attribute values to whole milliseconds for UI display."""
+    if value is None or isinstance(value, bool):
+        return None
+
+    try:
+        rounded = int(Decimal(str(value)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    except (ArithmeticError, TypeError, ValueError):
+        return None
+
+    return rounded
 
 
 def _map_hrv_status_level(value: Any) -> str | None:

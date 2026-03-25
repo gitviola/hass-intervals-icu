@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-03-25
+
+### Changed
+
+- HRV status attributes now expose both raw and unit-suffixed tile-card fields
+  (`overnight_hrv` + `overnight_hrv_with_unit`,
+  `hrv_7d_avg` + `hrv_7d_avg_with_unit`) and round HRV attribute values to
+  whole milliseconds.
+
 ## [0.8.0] - 2026-03-25
 
 ### Added
@@ -179,7 +188,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.1
 [0.8.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.0
 [0.7.3]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.3
 [0.7.2]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.2
