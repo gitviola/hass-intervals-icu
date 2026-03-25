@@ -29,5 +29,41 @@
         }
       }
     }
+  },
+  "services": {
+    "set_wellness": {
+      "name": "Set wellness",
+      "description": "Update one or more Intervals.icu wellness values for a date.",
+      "fields": {
+        "date": {
+          "name": "Date",
+          "description": "Target date in YYYY-MM-DD format. Defaults to today's local date when omitted."
+        },
+        "weight": {
+          "name": "Weight",
+          "description": "Body weight in kg."
+        },
+        "kcal_consumed": {
+          "name": "Calories consumed",
+          "description": "Calories consumed for the date."
+        },
+        "carbohydrates": {
+          "name": "Carbohydrates",
+          "description": "Carbohydrates consumed in grams."
+        },
+        "protein": {
+          "name": "Protein",
+          "description": "Protein consumed in grams."
+        },
+        "fat_total": {
+          "name": "Fat",
+          "description": "Fat consumed in grams."
+        },
+        "hydration_volume": {
+          "name": "Hydration volume",
+          "description": "Hydration volume in ml."
+        }
+      }
+    }
   }
 }
