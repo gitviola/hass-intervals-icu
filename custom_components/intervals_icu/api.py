@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from typing import Any
 from urllib.parse import quote
 
@@ -44,6 +45,36 @@ class IntervalsIcuApiClient:
         )
         if not isinstance(data, list):
             raise IntervalsIcuApiError("Unexpected athlete summary response format")
+        return [row for row in data if isinstance(row, dict)]
+
+
+    async def list_activities(
+        self,
+        athlete_id: str,
+        *,
+        oldest: str,
+        newest: str | None = None,
+        fields: Sequence[str] | None = None,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """Fetch activities in a date/time window."""
+        params: dict[str, Any] = {"oldest": oldest}
+        if newest:
+            params["newest"] = newest
+        if limit is not None:
+            params["limit"] = limit
+        if fields:
+            selected = [field.strip() for field in fields if field and field.strip()]
+            if selected:
+                params["fields"] = ",".join(selected)
+
+        data = await self._request_json(
+            "GET",
+            f"/api/v1/athlete/{athlete_id}/activities",
+            params=params,
+        )
+        if not isinstance(data, list):
+            raise IntervalsIcuApiError("Unexpected activities response format")
         return [row for row in data if isinstance(row, dict)]
 
     async def get_wellness_record(self, athlete_id: str, record_id: str) -> dict[str, Any]:

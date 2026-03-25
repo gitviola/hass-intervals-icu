@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date, timedelta
+import math
 import re
 from decimal import Decimal
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import (
     IntervalsIcuApiClient,
@@ -26,6 +28,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+_ACTIVITY_DAILY_FIELDS = ("id", "start_date_local", "calories")
 
 _WELLNESS_NO_ROLLOVER_KEYS = {
     "id",
@@ -97,6 +101,11 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             no_rollover_keys=set(),
         )
         try:
+            activity_daily = await self._async_fetch_daily_activity_calories()
+        except IntervalsIcuAuthError as err:
+            raise ConfigEntryAuthFailed from err
+
+        try:
             wellness = await self._async_fetch_latest_wellness(summary)
         except IntervalsIcuAuthError as err:
             raise ConfigEntryAuthFailed from err
@@ -114,9 +123,35 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return {
             "athlete": athlete,
             "summary": summary,
+            "activity_daily": activity_daily,
             "wellness": wellness,
             "wellness_sport_metrics": wellness_sport_metrics,
         }
+
+    async def _async_fetch_daily_activity_calories(self) -> dict[str, Any]:
+        """Fetch and aggregate day-level activity calories."""
+        calculation_date = dt_util.now().date().isoformat()
+        oldest, newest = _activity_window_bounds(calculation_date)
+
+        try:
+            activities = await self.api.list_activities(
+                self.athlete_id,
+                oldest=oldest,
+                newest=newest,
+                fields=_ACTIVITY_DAILY_FIELDS,
+            )
+        except IntervalsIcuAuthError:
+            raise
+        except (IntervalsIcuConnectionError, IntervalsIcuApiError) as err:
+            _LOGGER.debug(
+                "Failed loading day activities for athlete %s (%s): %s",
+                self.athlete_id,
+                calculation_date,
+                err,
+            )
+            return _activity_daily_error_payload(calculation_date, str(err))
+
+        return _aggregate_daily_activity_calories(activities, calculation_date)
 
     async def _async_fetch_latest_wellness(
         self, summary: dict[str, Any]
@@ -200,6 +235,80 @@ def _summary_sort_key(row: dict[str, Any]) -> tuple[str, int]:
     return (date_part, time_part)
 
 
+def _activity_window_bounds(local_day: str) -> tuple[str, str]:
+    """Build start/end timestamps for one local day."""
+    return (f"{local_day}T00:00:00", f"{local_day}T23:59:59")
+
+
+def _aggregate_daily_activity_calories(
+    rows: list[dict[str, Any]], calculation_date: str
+) -> dict[str, Any]:
+    """Aggregate calories from unique activities for one local day."""
+    unique_rows: dict[str, dict[str, Any]] = {}
+
+    for row in rows:
+        activity_id = str(row.get("id") or "").strip()
+        if not activity_id:
+            continue
+
+        start_date_local = row.get("start_date_local")
+        if (
+            isinstance(start_date_local, str)
+            and len(start_date_local) >= 10
+            and start_date_local[:10] != calculation_date
+        ):
+            continue
+
+        existing = unique_rows.get(activity_id)
+        if existing is None:
+            unique_rows[activity_id] = row
+            continue
+
+        existing_calories = _coerce_non_negative_int(existing.get("calories"))
+        current_calories = _coerce_non_negative_int(row.get("calories"))
+        if existing_calories is None and current_calories is not None:
+            unique_rows[activity_id] = row
+
+    total_calories = 0
+    activity_count_total = 0
+    activity_count_with_calories = 0
+    activity_count_missing_calories = 0
+
+    for row in unique_rows.values():
+        activity_count_total += 1
+        calories = _coerce_non_negative_int(row.get("calories"))
+        if calories is None:
+            activity_count_missing_calories += 1
+            continue
+
+        activity_count_with_calories += 1
+        total_calories += calories
+
+    source_status = "partial" if activity_count_missing_calories > 0 else "ok"
+    return {
+        "calories": total_calories,
+        "calculation_date": calculation_date,
+        "source_status": source_status,
+        "activity_count_total": activity_count_total,
+        "activity_count_with_calories": activity_count_with_calories,
+        "activity_count_missing_calories": activity_count_missing_calories,
+        "error": None,
+    }
+
+
+def _activity_daily_error_payload(calculation_date: str, error: str) -> dict[str, Any]:
+    """Return payload for day-level activity metrics when fetch fails."""
+    return {
+        "calories": None,
+        "calculation_date": calculation_date,
+        "source_status": "error",
+        "activity_count_total": 0,
+        "activity_count_with_calories": 0,
+        "activity_count_missing_calories": 0,
+        "error": error,
+    }
+
+
 def _wellness_sort_key(row: dict[str, Any]) -> tuple[str, str]:
     """Sort key for wellness records by id date and updated timestamp."""
     return (str(row.get("id") or ""), str(row.get("updated") or ""))
@@ -246,3 +355,36 @@ def _camel_to_snake(value: str) -> str:
 def _is_cacheable_value(value: Any) -> bool:
     """Return True when value can be safely cached and reused on null updates."""
     return isinstance(value, (str, int, float, bool, date, Decimal))
+
+
+def _coerce_non_negative_int(value: Any) -> int | None:
+    """Return non-negative integer for numeric values, otherwise None."""
+    if value is None or isinstance(value, bool):
+        return None
+
+    if isinstance(value, int):
+        return value if value >= 0 else None
+
+    if isinstance(value, float):
+        if not math.isfinite(value) or value < 0:
+            return None
+        return int(value)
+
+    if isinstance(value, Decimal):
+        if not value.is_finite() or value < 0:
+            return None
+        return int(value)
+
+    if isinstance(value, str):
+        cleaned = value.strip()
+        if not cleaned:
+            return None
+        try:
+            parsed = float(cleaned)
+        except ValueError:
+            return None
+        if not math.isfinite(parsed) or parsed < 0:
+            return None
+        return int(parsed)
+
+    return None

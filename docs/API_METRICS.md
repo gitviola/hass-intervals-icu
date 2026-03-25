@@ -3,6 +3,7 @@
 The integration currently exposes the metric fields from these Intervals.icu API responses:
 
 - `GET /api/v1/athlete/{id}/athlete-summary.json` (latest summary row)
+- `GET /api/v1/athlete/{id}/activities` (current local-day activity slice for daily calories)
 - `GET /api/v1/athlete/{id}/wellness/{date}` (latest wellness record)
 - `wellness.sportInfo[]` flattened to per-sport sensors (for example ride/run eFTP, W Prime, P Max)
 
@@ -25,6 +26,20 @@ The integration currently exposes the metric fields from these Intervals.icu API
 - `calories`
 - `weight`
 - `timeInZonesTot`
+
+Notes:
+- `summary.calories` follows athlete summary semantics and may represent a period aggregate
+  (for example week-level totals), not strictly current-day activity burn.
+
+## Daily Activity Metrics
+
+- `calories` (summed from same-day activities)
+
+Daily activity calories semantics:
+- Source of truth is per-activity calories from activity rows for one local calendar day.
+- Missing/invalid per-activity calories contribute `0` and do not fail aggregation.
+- No activity rows for the day yields `0` calories.
+- Metric includes `calculation_date` attribute for date clarity.
 
 ## Wellness Metrics
 
