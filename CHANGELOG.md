@@ -7,6 +7,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-25
+
+### Added
+
+- Added `Activity Calories Burned (Daily)` sensor that sums same-day activity
+  calories from Intervals activity rows.
+
+### Changed
+
+- Published a mainline release that includes both merged feature sets:
+  `intervals_icu.set_wellness` write support and daily activity calories.
+
 ## [0.4.0] - 2026-03-25
 
 ### Added
@@ -74,7 +86,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.5.0
 [0.4.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.3.1
 [0.3.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.3.0
