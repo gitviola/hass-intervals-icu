@@ -140,7 +140,7 @@ Efficiency semantics:
 - Recomputes derivation when new or corrected wellness HRV values are detected.
 
 Current baseline derivation shape:
-- Baseline window: 56 days of overnight HRV history.
-- Baseline lag: 4 days (reduces immediate pull from very recent overnight dips/spikes).
-- Baseline bounds: 40th and 95th percentiles of the lagged window.
+- Baseline window: 28 days of overnight HRV history.
+- Baseline lag: 6 days (reduces immediate pull from very recent overnight dips/spikes).
+- Baseline bounds: 30th and 97th percentiles of the lagged window.
 - Low threshold: below baseline lower bound by at least 2 ms (or 25% of baseline width, whichever is larger).

@@ -7,6 +7,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Retuned Garmin-like HRV baseline derivation using expanded Jan-Mar fixture
+  coverage:
+  - Baseline window `56d -> 28d`
+  - Baseline lag `4d -> 6d`
+  - Baseline percentiles `40/95 -> 30/97`
+  - Baseline minimum samples `18 -> 12` for earlier 2-4 week bootstrapping
+    when history is limited.
+
+### Added
+
+- Added combined Garmin export fixture `garmin_hrv_status_q1_2026.csv` and a
+  regression test asserting bounded baseline error across the full Q1 window.
+
 ## [0.7.1] - 2026-03-25
 
 ### Changed
