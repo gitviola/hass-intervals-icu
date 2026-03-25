@@ -23,13 +23,7 @@ from .api import (
     IntervalsIcuConnectionError,
 )
 from .const import (
-    ATTR_CARBOHYDRATES,
     ATTR_DATE,
-    ATTR_FAT_TOTAL,
-    ATTR_HYDRATION_VOLUME,
-    ATTR_KCAL_CONSUMED,
-    ATTR_PROTEIN,
-    ATTR_WEIGHT,
     DATA_COORDINATOR,
     DOMAIN,
     PLATFORMS,
@@ -41,17 +35,57 @@ from .coordinator import IntervalsIcuCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 SERVICE_REGISTRATION_KEY = "_services_registered"
+_NON_NEGATIVE_FLOAT = vol.All(vol.Coerce(float), vol.Range(min=0))
+_NON_NEGATIVE_INT = vol.All(vol.Coerce(int), vol.Range(min=0))
+_MENSTRUAL_PHASE_VALUES = ("PERIOD", "FOLLICULAR", "OVULATING", "LUTEAL", "NONE")
+
+
+def _normalize_menstrual_phase(value: str) -> str:
+    """Normalize menstrual phase input to upper-case enum representation."""
+    return value.strip().upper()
+
+
 SET_WELLNESS_SERVICE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_DATE): cv.string,
-        vol.Optional(ATTR_WEIGHT): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Optional(ATTR_KCAL_CONSUMED): vol.All(vol.Coerce(int), vol.Range(min=0)),
-        vol.Optional(ATTR_CARBOHYDRATES): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Optional(ATTR_PROTEIN): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Optional(ATTR_FAT_TOTAL): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Optional(ATTR_HYDRATION_VOLUME): vol.All(
-            vol.Coerce(float), vol.Range(min=0)
+        vol.Optional("weight"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("resting_hr"): _NON_NEGATIVE_INT,
+        vol.Optional("hrv"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("hrv_sdnn"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("menstrual_phase"): vol.All(
+            cv.string, _normalize_menstrual_phase, vol.In(_MENSTRUAL_PHASE_VALUES)
         ),
+        vol.Optional("kcal_consumed"): _NON_NEGATIVE_INT,
+        vol.Optional("sleep_secs"): _NON_NEGATIVE_INT,
+        vol.Optional("sleep_score"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("sleep_quality"): _NON_NEGATIVE_INT,
+        vol.Optional("avg_sleeping_hr"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("soreness"): _NON_NEGATIVE_INT,
+        vol.Optional("fatigue"): _NON_NEGATIVE_INT,
+        vol.Optional("stress"): _NON_NEGATIVE_INT,
+        vol.Optional("mood"): _NON_NEGATIVE_INT,
+        vol.Optional("motivation"): _NON_NEGATIVE_INT,
+        vol.Optional("injury"): _NON_NEGATIVE_INT,
+        vol.Optional("sp_o2"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("systolic"): _NON_NEGATIVE_INT,
+        vol.Optional("diastolic"): _NON_NEGATIVE_INT,
+        vol.Optional("hydration"): _NON_NEGATIVE_INT,
+        vol.Optional("hydration_volume"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("readiness"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("baevsky_si"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("blood_glucose"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("lactate"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("body_fat"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("abdomen"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("vo2max"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("comments"): cv.string,
+        vol.Optional("steps"): _NON_NEGATIVE_INT,
+        vol.Optional("respiration"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("carbohydrates"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("protein"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("fat_total"): _NON_NEGATIVE_FLOAT,
+        vol.Optional("temp_weight"): cv.boolean,
+        vol.Optional("temp_resting_hr"): cv.boolean,
     },
     extra=vol.PREVENT_EXTRA,
 )

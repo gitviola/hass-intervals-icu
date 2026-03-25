@@ -33,7 +33,7 @@
   "services": {
     "set_wellness": {
       "name": "Set wellness",
-      "description": "Update one or more Intervals.icu wellness values for a date.",
+      "description": "Update one or more Intervals.icu wellness values for a date. Templates are supported in YAML mode.",
       "fields": {
         "date": {
           "name": "Date",
@@ -43,9 +43,117 @@
           "name": "Weight",
           "description": "Body weight in kg."
         },
+        "body_fat": {
+          "name": "Body fat",
+          "description": "Body fat percentage."
+        },
+        "abdomen": {
+          "name": "Abdomen",
+          "description": "Abdomen metric."
+        },
+        "resting_hr": {
+          "name": "Resting HR",
+          "description": "Resting heart rate (bpm)."
+        },
+        "hrv": {
+          "name": "HRV",
+          "description": "Heart rate variability."
+        },
+        "hrv_sdnn": {
+          "name": "HRV SDNN",
+          "description": "HRV SDNN."
+        },
+        "vo2max": {
+          "name": "VO2 max",
+          "description": "VO2 max value."
+        },
+        "sleep_secs": {
+          "name": "Sleep seconds",
+          "description": "Sleep duration in seconds."
+        },
+        "sleep_score": {
+          "name": "Sleep score",
+          "description": "Sleep score."
+        },
+        "sleep_quality": {
+          "name": "Sleep quality",
+          "description": "Sleep quality scale integer."
+        },
+        "avg_sleeping_hr": {
+          "name": "Avg sleeping HR",
+          "description": "Average sleeping heart rate."
+        },
+        "soreness": {
+          "name": "Soreness",
+          "description": "Soreness scale integer."
+        },
+        "fatigue": {
+          "name": "Fatigue",
+          "description": "Fatigue scale integer."
+        },
+        "stress": {
+          "name": "Stress",
+          "description": "Stress scale integer."
+        },
+        "mood": {
+          "name": "Mood",
+          "description": "Mood scale integer."
+        },
+        "motivation": {
+          "name": "Motivation",
+          "description": "Motivation scale integer."
+        },
+        "injury": {
+          "name": "Injury",
+          "description": "Injury scale integer."
+        },
+        "menstrual_phase": {
+          "name": "Menstrual phase",
+          "description": "Allowed: PERIOD, FOLLICULAR, OVULATING, LUTEAL, NONE."
+        },
+        "sp_o2": {
+          "name": "SpO2",
+          "description": "Blood oxygen saturation."
+        },
+        "systolic": {
+          "name": "Systolic",
+          "description": "Systolic blood pressure."
+        },
+        "diastolic": {
+          "name": "Diastolic",
+          "description": "Diastolic blood pressure."
+        },
+        "respiration": {
+          "name": "Respiration",
+          "description": "Respiration value."
+        },
+        "hydration": {
+          "name": "Hydration",
+          "description": "Hydration scale integer."
+        },
         "kcal_consumed": {
           "name": "Calories consumed",
           "description": "Calories consumed for the date."
+        },
+        "steps": {
+          "name": "Steps",
+          "description": "Daily step count."
+        },
+        "readiness": {
+          "name": "Readiness",
+          "description": "Readiness score/value."
+        },
+        "baevsky_si": {
+          "name": "Baevsky SI",
+          "description": "Baevsky stress index."
+        },
+        "blood_glucose": {
+          "name": "Blood glucose",
+          "description": "Blood glucose value."
+        },
+        "lactate": {
+          "name": "Lactate",
+          "description": "Lactate value."
         },
         "carbohydrates": {
           "name": "Carbohydrates",
@@ -62,6 +170,18 @@
         "hydration_volume": {
           "name": "Hydration volume",
           "description": "Hydration volume in ml."
+        },
+        "comments": {
+          "name": "Comments",
+          "description": "Free-text wellness note."
+        },
+        "temp_weight": {
+          "name": "Temporary weight",
+          "description": "Set tempWeight flag."
+        },
+        "temp_resting_hr": {
+          "name": "Temporary resting HR",
+          "description": "Set tempRestingHR flag."
         }
       }
     }

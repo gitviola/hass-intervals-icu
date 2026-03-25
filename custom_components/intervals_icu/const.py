@@ -19,18 +19,42 @@ DATA_COORDINATOR = "coordinator"
 SERVICE_SET_WELLNESS = "set_wellness"
 
 ATTR_DATE = "date"
-ATTR_WEIGHT = "weight"
-ATTR_KCAL_CONSUMED = "kcal_consumed"
-ATTR_CARBOHYDRATES = "carbohydrates"
-ATTR_PROTEIN = "protein"
-ATTR_FAT_TOTAL = "fat_total"
-ATTR_HYDRATION_VOLUME = "hydration_volume"
 
 WRITABLE_WELLNESS_FIELD_MAP: dict[str, str] = {
-    ATTR_WEIGHT: "weight",
-    ATTR_KCAL_CONSUMED: "kcalConsumed",
-    ATTR_CARBOHYDRATES: "carbohydrates",
-    ATTR_PROTEIN: "protein",
-    ATTR_FAT_TOTAL: "fatTotal",
-    ATTR_HYDRATION_VOLUME: "hydrationVolume",
+    "weight": "weight",
+    "resting_hr": "restingHR",
+    "hrv": "hrv",
+    "hrv_sdnn": "hrvSDNN",
+    "menstrual_phase": "menstrualPhase",
+    "kcal_consumed": "kcalConsumed",
+    "sleep_secs": "sleepSecs",
+    "sleep_score": "sleepScore",
+    "sleep_quality": "sleepQuality",
+    "avg_sleeping_hr": "avgSleepingHR",
+    "soreness": "soreness",
+    "fatigue": "fatigue",
+    "stress": "stress",
+    "mood": "mood",
+    "motivation": "motivation",
+    "injury": "injury",
+    "sp_o2": "spO2",
+    "systolic": "systolic",
+    "diastolic": "diastolic",
+    "hydration": "hydration",
+    "hydration_volume": "hydrationVolume",
+    "readiness": "readiness",
+    "baevsky_si": "baevskySI",
+    "blood_glucose": "bloodGlucose",
+    "lactate": "lactate",
+    "body_fat": "bodyFat",
+    "abdomen": "abdomen",
+    "vo2max": "vo2max",
+    "comments": "comments",
+    "steps": "steps",
+    "respiration": "respiration",
+    "carbohydrates": "carbohydrates",
+    "protein": "protein",
+    "fat_total": "fatTotal",
+    "temp_weight": "tempWeight",
+    "temp_resting_hr": "tempRestingHR",
 }

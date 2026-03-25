@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-25
+
+### Added
+
+- Expanded `intervals_icu.set_wellness` writable fields to cover a broad set of
+  Intervals wellness metrics (body, recovery, sleep, vitals, nutrition, and
+  notes/flags).
+
+### Changed
+
+- Documented and exposed templated-value usage for wellness service calls in
+  Home Assistant YAML mode.
+
 ## [0.5.0] - 2026-03-25
 
 ### Added
@@ -86,7 +99,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.6.0
 [0.5.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.5.0
 [0.4.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.3.1

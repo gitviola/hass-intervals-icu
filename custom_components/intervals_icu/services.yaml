@@ -2,7 +2,8 @@ set_wellness:
   name: Set wellness
   description: >
     Update one or more Intervals.icu wellness values. Only provided fields are
-    sent, omitted fields are left unchanged in Intervals.icu.
+    sent, omitted fields are left unchanged in Intervals.icu. Templates are
+    supported in YAML mode of Home Assistant actions/service calls.
   fields:
     date:
       name: Date
@@ -21,6 +22,238 @@ set_wellness:
           min: 0
           max: 400
           step: 0.1
+          mode: box
+    body_fat:
+      name: Body fat
+      description: Body fat percentage.
+      example: 15.8
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    abdomen:
+      name: Abdomen
+      description: Abdomen metric (unit depends on your Intervals setup/device source).
+      example: 84.5
+      selector:
+        number:
+          min: 0
+          max: 500
+          step: 0.1
+          mode: box
+    resting_hr:
+      name: Resting HR
+      description: Resting heart rate (bpm).
+      example: 54
+      selector:
+        number:
+          min: 0
+          max: 260
+          step: 1
+          mode: box
+    hrv:
+      name: HRV
+      description: Heart rate variability.
+      example: 36
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 0.1
+          mode: box
+    hrv_sdnn:
+      name: HRV SDNN
+      description: HRV SDNN.
+      example: 42
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 0.1
+          mode: box
+    vo2max:
+      name: VO2 max
+      description: VO2 max value.
+      example: 52.3
+      selector:
+        number:
+          min: 0
+          max: 200
+          step: 0.1
+          mode: box
+    sleep_secs:
+      name: Sleep seconds
+      description: Sleep duration in seconds.
+      example: 25080
+      selector:
+        number:
+          min: 0
+          max: 172800
+          step: 1
+          mode: box
+    sleep_score:
+      name: Sleep score
+      description: Sleep score.
+      example: 75
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    sleep_quality:
+      name: Sleep quality
+      description: Sleep quality scale integer.
+      example: 3
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    avg_sleeping_hr:
+      name: Avg sleeping HR
+      description: Average sleeping heart rate.
+      example: 49.2
+      selector:
+        number:
+          min: 0
+          max: 260
+          step: 0.1
+          mode: box
+    soreness:
+      name: Soreness
+      description: Soreness scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    fatigue:
+      name: Fatigue
+      description: Fatigue scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    stress:
+      name: Stress
+      description: Stress scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    mood:
+      name: Mood
+      description: Mood scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    motivation:
+      name: Motivation
+      description: Motivation scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    injury:
+      name: Injury
+      description: Injury scale integer.
+      example: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    menstrual_phase:
+      name: Menstrual phase
+      description: Menstrual phase enum.
+      example: "FOLLICULAR"
+      selector:
+        select:
+          options:
+            - "PERIOD"
+            - "FOLLICULAR"
+            - "OVULATING"
+            - "LUTEAL"
+            - "NONE"
+    sp_o2:
+      name: SpO2
+      description: Blood oxygen saturation.
+      example: 97.2
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    systolic:
+      name: Systolic
+      description: Systolic blood pressure.
+      example: 118
+      selector:
+        number:
+          min: 0
+          max: 300
+          step: 1
+          mode: box
+    diastolic:
+      name: Diastolic
+      description: Diastolic blood pressure.
+      example: 74
+      selector:
+        number:
+          min: 0
+          max: 300
+          step: 1
+          mode: box
+    respiration:
+      name: Respiration
+      description: Respiration value.
+      example: 14.7
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    hydration:
+      name: Hydration
+      description: Hydration scale integer.
+      example: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: box
+    hydration_volume:
+      name: Hydration volume
+      description: Hydration volume in ml.
+      example: 2500
+      selector:
+        number:
+          min: 0
+          max: 30000
+          step: 1
           mode: box
     kcal_consumed:
       name: Calories consumed
@@ -62,13 +295,72 @@ set_wellness:
           max: 2000
           step: 0.1
           mode: box
-    hydration_volume:
-      name: Hydration volume
-      description: Hydration volume in ml.
-      example: 2500
+    steps:
+      name: Steps
+      description: Daily step count.
+      example: 7535
       selector:
         number:
           min: 0
-          max: 30000
+          max: 200000
           step: 1
           mode: box
+    readiness:
+      name: Readiness
+      description: Readiness score/value.
+      example: 7.2
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    baevsky_si:
+      name: Baevsky SI
+      description: Baevsky stress index.
+      example: 120.5
+      selector:
+        number:
+          min: 0
+          max: 10000
+          step: 0.1
+          mode: box
+    blood_glucose:
+      name: Blood glucose
+      description: Blood glucose value.
+      example: 89.4
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 0.1
+          mode: box
+    lactate:
+      name: Lactate
+      description: Lactate value.
+      example: 2.1
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          mode: box
+    comments:
+      name: Comments
+      description: Free-text wellness note.
+      example: "Body scale sync"
+      selector:
+        text:
+          multiline: true
+    temp_weight:
+      name: Temporary weight
+      description: Set tempWeight flag.
+      example: false
+      selector:
+        boolean:
+    temp_resting_hr:
+      name: Temporary resting HR
+      description: Set tempRestingHR flag.
+      example: false
+      selector:
+        boolean:

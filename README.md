@@ -40,21 +40,23 @@ Full metric inventory:
 
 ## Action: set wellness
 
-The integration exposes `intervals_icu.set_wellness` for writing a subset of
-wellness fields back to Intervals.icu.
+The integration exposes `intervals_icu.set_wellness` for writing wellness
+fields back to Intervals.icu.
 
 Rules:
 - If `date` is omitted, Home Assistant local `today` is used.
 - Only provided fields are sent; omitted fields are not changed.
 - At least one writable field is required.
 
-Writable fields:
-- `weight`
-- `kcal_consumed`
-- `carbohydrates`
-- `protein`
-- `fat_total`
-- `hydration_volume`
+Writable fields include:
+- Body metrics: `weight`, `body_fat`, `abdomen`
+- Cardiovascular/recovery: `resting_hr`, `hrv`, `hrv_sdnn`, `vo2max`, `sp_o2`
+- Sleep: `sleep_secs`, `sleep_score`, `sleep_quality`, `avg_sleeping_hr`
+- Wellness scales: `soreness`, `fatigue`, `stress`, `mood`, `motivation`, `injury`, `hydration`
+- Nutrition/metabolic: `kcal_consumed`, `carbohydrates`, `protein`, `fat_total`
+- Other wellness values: `systolic`, `diastolic`, `respiration`, `steps`,
+  `readiness`, `baevsky_si`, `blood_glucose`, `lactate`, `menstrual_phase`,
+  `hydration_volume`, `comments`, `temp_weight`, `temp_resting_hr`
 
 Example (today):
 
@@ -64,6 +66,16 @@ data:
   weight: 72.4
   protein: 160
   carbohydrates: 240
+```
+
+Example with dynamic values (YAML mode in Actions / Developer Tools):
+
+```yaml
+action: intervals_icu.set_wellness
+data:
+  weight: "{{ states('input_number.martin_body_weight') }}"
+  body_fat: "{{ states('sensor.martin_body_weight_body_fat') }}"
+  resting_hr: "{{ states('sensor.some_resting_hr_sensor') }}"
 ```
 
 Example (explicit date):
