@@ -46,3 +46,17 @@ Release checklist:
 
 Backfill policy:
 - If a tag exists without release notes or changelog coverage, backfill both before the next release.
+
+## Pull Requests
+- PRs merged into `main` MUST always use **Squash and merge**.
+- Goal: each merged PR results in exactly one commit in `main`.
+
+## Active Technologies
+- Python 3.13+ (Home Assistant custom integration runtime) + Home Assistant core helpers/config entries/services, aiohttp clien (001-wellness-write-services)
+- N/A (remote API + in-memory coordinator cache) (001-wellness-write-services)
+- Python 3.13+ (Home Assistant custom integration runtime) + Home Assistant coordinator/entity helpers, aiohttp client, Intervals.icu REST API (002-daily-activity-calories)
+- Python 3.13+ (Home Assistant custom integration runtime) + Home Assistant coordinator/entity helpers, aiohttp client, Intervals.icu REST API, Python `statistics` module (003-garmin-hrv-status)
+- N/A (remote API + in-memory coordinator cache; recorder-backed entity history in Home Assistant) (003-garmin-hrv-status)
+
+## Recent Changes
+- 001-wellness-write-services: Added Python 3.13+ (Home Assistant custom integration runtime) + Home Assistant core helpers/config entries/services, aiohttp clien

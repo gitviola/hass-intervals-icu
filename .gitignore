@@ -2,5 +2,10 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
+venv/
+dist/
+*.egg-info/
+*.log
 .DS_Store
 .specify/init-options.json

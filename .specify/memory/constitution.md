@@ -1,50 +1,109 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: template (unversioned) -> 1.0.0
+- Modified principles:
+  - Template Principle 1 -> I. Home Assistant UX and Entity Stability
+  - Template Principle 2 -> II. Coordinator-First Data Collection
+  - Template Principle 3 -> III. Metric Semantics, Freshness, and Rollover
+  - Template Principle 4 -> IV. Security, Privacy, and Diagnostics
+  - Template Principle 5 -> V. Semantic Releases and HACS Compliance
+- Added sections:
+  - Technical and Quality Standards
+  - Development Workflow and Quality Gates
+- Removed sections:
+  - Placeholder-only template sections
+- Templates requiring updates:
+  - ✅ .specify/templates/plan-template.md
+  - ✅ .specify/templates/spec-template.md
+  - ✅ .specify/templates/tasks-template.md
+  - ⚠ pending: .specify/templates/commands/*.md (directory not present in this repo)
+- Follow-up TODOs: none
+-->
+
+# hass-intervals-icu Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Home Assistant UX and Entity Stability
+This integration MUST provide a reliable Home Assistant-native user experience:
+- Setup MUST use config entries and options flow, with no YAML-only setup path.
+- Entity `unique_id` values MUST be stable across upgrades.
+- The integration MUST avoid duplicate logical entries for the same athlete.
+- User-facing metric names MUST stay backward compatible unless a breaking release
+  and migration note are provided.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Coordinator-First Data Collection
+All remote reads MUST be coordinated and asynchronous:
+- API polling MUST be centralized through `DataUpdateCoordinator`.
+- Entities MUST NOT perform direct network I/O in state properties.
+- Polling interval configuration MUST enforce safe lower bounds.
+- Auth/network/API failures MUST degrade gracefully and expose actionable errors.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Metric Semantics, Freshness, and Rollover
+Metric correctness is non-negotiable:
+- Every exposed metric MUST map to a documented API source field.
+- Date-scoped metrics (sleep, steps, nutrition) MUST define freshness behavior.
+- Rollover of null values MUST only apply to explicitly persistent metrics, with
+  exceptions documented and tested.
+- Display formatting (humanized text, precision hints) MUST NOT mutate raw values.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Security, Privacy, and Diagnostics
+Sensitive data protection and operability are mandatory:
+- API credentials MUST NEVER be committed, logged, or emitted in diagnostics.
+- Diagnostic output MUST redact secrets and personal identifiers where applicable.
+- Error handling MUST avoid leaking confidential payload data.
+- Troubleshooting paths SHOULD include clear log categories and remediation steps.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Semantic Releases and HACS Compliance
+Release discipline MUST align with Home Assistant and HACS expectations:
+- Versioning MUST follow Semantic Versioning (`MAJOR.MINOR.PATCH`).
+- Every release MUST include:
+  - manifest version update,
+  - `CHANGELOG.md` entry,
+  - GitHub Release notes.
+- Release tags MUST be `vX.Y.Z` and match manifest version `X.Y.Z`.
+- HACS and hassfest validations MUST pass before publishing.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Technical and Quality Standards
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Runtime code SHOULD be typed, async-safe Python and align with HA integration
+  architecture patterns.
+- Integration metadata (`manifest.json`, `hacs.json`, translations) MUST remain
+  valid and in sync with config/options flow behavior.
+- Changes affecting data semantics, polling, or user-visible sensors MUST include
+  verification steps (at minimum compile checks and targeted runtime validation).
+- New behavior that changes output meaning SHOULD include docs updates in README
+  and/or docs inventory files.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Workflow and Quality Gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Feature development SHOULD follow: `specify -> clarify -> plan -> tasks ->
+  analyze -> implement`.
+- Constitution checks in planning are a hard gate: unresolved MUST conflicts
+  require spec/plan/task updates before implementation.
+- Pull requests SHOULD include:
+  - scope summary,
+  - validation evidence,
+  - release/changelog impact statement.
+- Pull requests merged into `main` MUST use **Squash and merge** so each PR
+  contributes exactly one commit on `main`.
+- Hotfixes MAY bypass full planning flow only for urgent production breakages, but
+  MUST still satisfy release, validation, and documentation obligations.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes conflicting local conventions for this repository.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- Amendment process:
+  - Propose changes via pull request with rationale and impact summary.
+  - Classify version bump by semantic impact:
+    - MAJOR: incompatible principle removal or redefinition.
+    - MINOR: new principle/section or materially expanded obligations.
+    - PATCH: clarifications without semantic policy change.
+  - Record amendment date and version update in this file.
+- Compliance review expectations:
+  - Every plan and release SHOULD include a constitution compliance check.
+  - Non-compliance MUST be explicitly documented with remediation or approved
+    exception rationale.
+
+**Version**: 1.0.0 | **Ratified**: 2026-03-24 | **Last Amended**: 2026-03-24

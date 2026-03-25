@@ -95,6 +95,18 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Non-Functional Requirements
+
+- **NFR-001**: System MUST [define measurable performance/reliability target].
+- **NFR-002**: System MUST [define observability/diagnostic expectations].
+- **NFR-003**: System MUST [define security/privacy requirements].
+
+### Data Semantics & Freshness *(required when exposing metrics/data fields)*
+
+- Define source-of-truth for each surfaced metric/field.
+- Define freshness semantics for date-scoped values (for example, daily records).
+- Define null/rollover behavior and user-visible meaning.
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]

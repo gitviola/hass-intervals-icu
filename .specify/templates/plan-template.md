@@ -31,7 +31,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] HA UX and entity stability: config entry/options flow impact assessed, and
+      `unique_id` stability preserved or migration documented.
+- [ ] Coordinator-first design: all external reads flow through coordinator;
+      entity property reads remain I/O free.
+- [ ] Metric semantics and freshness: each new/changed metric has explicit source,
+      freshness behavior, and rollover/null handling rules.
+- [ ] Security and diagnostics: secret handling/redaction impact assessed.
+- [ ] Release impact declared: SemVer classification and changelog/release-note
+      implications identified.
 
 ## Project Structure
 

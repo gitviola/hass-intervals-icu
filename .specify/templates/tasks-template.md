@@ -68,6 +68,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T007 Create base models/entities that all stories depend on
 - [ ] T008 Configure error handling and logging infrastructure
 - [ ] T009 Setup environment configuration management
+- [ ] T010 Define/validate diagnostics redaction for sensitive fields (if applicable)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -155,6 +156,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX Confirm config-entry/options-flow UX and unique-id stability impacts
+- [ ] TXXX Update changelog/release notes and validate SemVer bump classification
 - [ ] TXXX Run quickstart.md validation
 
 ---
