@@ -7,6 +7,30 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-25
+
+### Added
+
+- Added Garmin-like HRV derived sensors:
+  - `HRV Status`
+  - `HRV Status (Level)`
+  - `HRV Baseline Lower`
+  - `HRV Baseline Upper`
+  - `HRV Low Threshold`
+- Added coordinator-side HRV derivation cache and change detection so unchanged
+  wellness HRV inputs reuse previous derived outputs.
+- Added optional integration option `Birthdate override (YYYY-MM-DD)` used for
+  age-context HRV `Poor` classification when profile birthdate data is missing.
+- Added fixture-based unit tests for HRV derivation logic in
+  `tests/test_hrv_status_logic.py`.
+
+### Changed
+
+- Wellness history reads now include a bounded rolling window used to bootstrap
+  and maintain HRV status/baseline calculations for the configured athlete ID.
+- Updated docs (`README.md`, `docs/API_METRICS.md`) with HRV status semantics,
+  age-context behavior, and chart-ready range outputs.
+
 ## [0.6.0] - 2026-03-25
 
 ### Added
@@ -99,7 +123,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.0
 [0.6.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.6.0
 [0.5.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.5.0
 [0.4.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.4.0
