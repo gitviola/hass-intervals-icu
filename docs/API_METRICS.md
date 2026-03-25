@@ -5,6 +5,8 @@ The integration currently exposes the metric fields from these Intervals.icu API
 - `GET /api/v1/athlete/{id}/athlete-summary.json` (latest summary row)
 - `GET /api/v1/athlete/{id}/activities` (current local-day activity slice for daily calories)
 - `GET /api/v1/athlete/{id}/wellness/{date}` (latest wellness record)
+- `GET /api/v1/athlete/{id}/wellness.json` (bounded wellness history for HRV status derivation)
+- `GET /api/v1/athlete/{id}` (athlete profile fields used for age-context HRV interpretation)
 - `wellness.sportInfo[]` flattened to per-sport sensors (for example ride/run eFTP, W Prime, P Max)
 
 ## Summary Metrics
@@ -114,3 +116,24 @@ The integration also exposes additional text sensors for key wellness scales:
 - `Hydration (Level)`
 
 These are derived from the numeric wellness fields using Intervals.icu UI-style labels.
+
+## Derived HRV Status Metrics
+
+The integration also derives Garmin-like HRV status outputs from overnight wellness HRV:
+
+- `HRV Status` (rolling 7-day mean, min 6 samples)
+- `HRV Status (Level)` (`Balanced`, `Unbalanced`, `Low`, `Poor`, `No status`)
+- `HRV Baseline Lower` (rolling 21-day personal baseline low bound, min 18 samples)
+- `HRV Baseline Upper` (rolling 21-day personal baseline high bound, min 18 samples)
+- `HRV Low Threshold` (well-below-baseline cutoff)
+
+Status semantics:
+- `Balanced`: status value is inside baseline range.
+- `Unbalanced`: status value is outside baseline range but not low/poor.
+- `Low`: status value is below low threshold.
+- `Poor`: persistent low-vs-age context condition (with age from athlete profile birthdate/sex, or optional birthdate override setting).
+- `No status`: insufficient data for reliable status/baseline.
+
+Efficiency semantics:
+- Uses coordinator-side source fingerprinting and cache reuse when wellness HRV inputs are unchanged.
+- Recomputes derivation when new or corrected wellness HRV values are detected.

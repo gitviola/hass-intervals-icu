@@ -27,6 +27,7 @@ SOURCE_SUMMARY = "summary"
 SOURCE_ACTIVITY_DAILY = "activity_daily"
 SOURCE_WELLNESS = "wellness"
 SOURCE_WELLNESS_SPORT = "wellness_sport_metrics"
+SOURCE_WELLNESS_HRV_STATUS = "wellness_hrv_status"
 
 GENERIC_SPORT_ICON = "mdi:trophy-outline"
 SPORT_TYPE_ICONS: dict[str, str] = {
@@ -113,6 +114,10 @@ INTEGER_DISPLAY_PRECISION_KEYS: set[str] = {
     "wellness_avg_sleeping_hr",
     "wellness_resting_hr",
     "wellness_hrv",
+    "wellness_hrv_status",
+    "wellness_hrv_baseline_lower",
+    "wellness_hrv_baseline_upper",
+    "wellness_hrv_low_threshold",
     "wellness_hrv_sdnn",
     "wellness_ctl",
     "wellness_atl",
@@ -395,6 +400,50 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         icon="mdi:head-heart-outline",
         source=SOURCE_WELLNESS,
         value_key="hrv",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hrv_status",
+        name="HRV Status",
+        icon="mdi:head-heart-outline",
+        source=SOURCE_WELLNESS_HRV_STATUS,
+        value_key="value",
+        native_unit_of_measurement="ms",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hrv_status_level",
+        name="HRV Status (Level)",
+        icon="mdi:head-heart-outline",
+        source=SOURCE_WELLNESS_HRV_STATUS,
+        value_key="level",
+        value_transform=lambda value: _map_hrv_status_level(value),
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hrv_baseline_lower",
+        name="HRV Baseline Lower",
+        icon="mdi:chart-bell-curve",
+        source=SOURCE_WELLNESS_HRV_STATUS,
+        value_key="baseline_low",
+        native_unit_of_measurement="ms",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hrv_baseline_upper",
+        name="HRV Baseline Upper",
+        icon="mdi:chart-bell-curve",
+        source=SOURCE_WELLNESS_HRV_STATUS,
+        value_key="baseline_high",
+        native_unit_of_measurement="ms",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    IntervalsIcuSensorDescription(
+        key="wellness_hrv_low_threshold",
+        name="HRV Low Threshold",
+        icon="mdi:chart-bell-curve-cumulative",
+        source=SOURCE_WELLNESS_HRV_STATUS,
+        value_key="low_cutoff",
+        native_unit_of_measurement="ms",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     IntervalsIcuSensorDescription(
@@ -860,12 +909,17 @@ class IntervalsIcuSensor(CoordinatorEntity[IntervalsIcuCoordinator], SensorEntit
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra state attributes for source-specific diagnostics."""
-        if self.entity_description.source != SOURCE_ACTIVITY_DAILY:
-            return None
+        if self.entity_description.source == SOURCE_ACTIVITY_DAILY:
+            source = _data_for_source(self.coordinator.data, SOURCE_ACTIVITY_DAILY)
+            attrs = _daily_activity_attributes(source)
+            return attrs or None
 
-        source = _data_for_source(self.coordinator.data, SOURCE_ACTIVITY_DAILY)
-        attrs = _daily_activity_attributes(source)
-        return attrs or None
+        if self.entity_description.source == SOURCE_WELLNESS_HRV_STATUS:
+            source = _data_for_source(self.coordinator.data, SOURCE_WELLNESS_HRV_STATUS)
+            attrs = _hrv_status_attributes(source)
+            return attrs or None
+
+        return None
 
 
 def _build_wellness_sport_sensor_descriptions(
@@ -1011,6 +1065,52 @@ def _daily_activity_attributes(source: dict[str, Any]) -> dict[str, Any]:
         if value is not None:
             attrs[key] = value
     return attrs
+
+
+def _hrv_status_attributes(source: dict[str, Any]) -> dict[str, Any]:
+    """Return curated attributes for HRV status and baseline entities."""
+    attrs: dict[str, Any] = {}
+    for key in (
+        "level",
+        "calculation_date",
+        "source_status",
+        "sample_count_7d",
+        "sample_count_21d",
+        "age_norm_lower_bound",
+        "status_window_days",
+        "baseline_window_days",
+        "poor_persistence_days",
+        "baseline_suppressed",
+        "cache_hit",
+        "birthdate_source",
+        "sex",
+        "recompute_mode",
+        "points_total",
+        "error",
+    ):
+        value = source.get(key)
+        if value is not None:
+            attrs[key] = value
+    return attrs
+
+
+def _map_hrv_status_level(value: Any) -> str | None:
+    """Map internal HRV status codes to Garmin-style labels."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return None
+
+    cleaned = value.strip().lower()
+    labels = {
+        "balanced": "Balanced",
+        "unbalanced": "Unbalanced",
+        "low": "Low",
+        "poor": "Poor",
+        "no_status": "No status",
+        "no status": "No status",
+    }
+    return labels.get(cleaned)
 
 
 def _map_scale(value: Any, labels: tuple[str, ...]) -> str | None:
