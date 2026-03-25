@@ -24,6 +24,7 @@ from .const import DATA_COORDINATOR, DOMAIN
 from .coordinator import IntervalsIcuCoordinator
 
 SOURCE_SUMMARY = "summary"
+SOURCE_ACTIVITY_DAILY = "activity_daily"
 SOURCE_WELLNESS = "wellness"
 SOURCE_WELLNESS_SPORT = "wellness_sport_metrics"
 
@@ -105,6 +106,7 @@ INTEGER_DISPLAY_PRECISION_KEYS: set[str] = {
     "summary_total_elevation_gain",
     "summary_calories",
     "summary_time_in_zones_total",
+    "activity_daily_calories",
     "wellness_sleep_secs",
     "wellness_sleep_score",
     "wellness_sleep_quality",
@@ -309,6 +311,18 @@ SUMMARY_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
         source=SOURCE_SUMMARY,
         value_key="timeInZonesTot",
         native_unit_of_measurement="s",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
+
+DAILY_ACTIVITY_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
+    IntervalsIcuSensorDescription(
+        key="activity_daily_calories",
+        name="Activity Calories Burned (Daily)",
+        icon="mdi:fire",
+        source=SOURCE_ACTIVITY_DAILY,
+        value_key="calories",
+        native_unit_of_measurement="kcal",
         state_class=SensorStateClass.MEASUREMENT,
     ),
 )
@@ -784,6 +798,7 @@ WELLNESS_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
 
 BASE_SENSOR_DESCRIPTIONS: tuple[IntervalsIcuSensorDescription, ...] = (
     *SUMMARY_SENSOR_DESCRIPTIONS,
+    *DAILY_ACTIVITY_SENSOR_DESCRIPTIONS,
     *WELLNESS_SENSOR_DESCRIPTIONS,
 )
 
@@ -841,6 +856,16 @@ class IntervalsIcuSensor(CoordinatorEntity[IntervalsIcuCoordinator], SensorEntit
         if self.entity_description.value_transform is not None:
             value = self.entity_description.value_transform(value)
         return _normalize_sensor_value(value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes for source-specific diagnostics."""
+        if self.entity_description.source != SOURCE_ACTIVITY_DAILY:
+            return None
+
+        source = _data_for_source(self.coordinator.data, SOURCE_ACTIVITY_DAILY)
+        attrs = _daily_activity_attributes(source)
+        return attrs or None
 
 
 def _build_wellness_sport_sensor_descriptions(
@@ -969,6 +994,23 @@ def _format_seconds_as_hours_minutes(value: Any) -> str | None:
     hours = total_seconds // 3600
     minutes = (total_seconds % 3600) // 60
     return f"{hours}h {minutes}m"
+
+
+def _daily_activity_attributes(source: dict[str, Any]) -> dict[str, Any]:
+    """Return curated attributes for day-level activity calories."""
+    attrs: dict[str, Any] = {}
+    for key in (
+        "calculation_date",
+        "source_status",
+        "activity_count_total",
+        "activity_count_with_calories",
+        "activity_count_missing_calories",
+        "error",
+    ):
+        value = source.get(key)
+        if value is not None:
+            attrs[key] = value
+    return attrs
 
 
 def _map_scale(value: Any, labels: tuple[str, ...]) -> str | None:
