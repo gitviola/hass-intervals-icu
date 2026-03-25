@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 import voluptuous as vol
@@ -20,6 +21,7 @@ from .api import (
 )
 from .const import (
     CONF_ATHLETE_ID,
+    CONF_BIRTHDATE,
     CONF_SCAN_INTERVAL_MINUTES,
     DEFAULT_ATHLETE_ID,
     DEFAULT_SCAN_INTERVAL_MINUTES,
@@ -40,6 +42,7 @@ OPTIONS_SCHEMA = vol.Schema(
         vol.Required(
             CONF_SCAN_INTERVAL_MINUTES, default=DEFAULT_SCAN_INTERVAL_MINUTES
         ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL_MINUTES)),
+        vol.Optional(CONF_BIRTHDATE): str,
     }
 )
 
@@ -108,8 +111,22 @@ class IntervalsIcuOptionsFlow(config_entries.OptionsFlowWithReload):
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Manage integration options."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            cleaned = dict(user_input)
+            raw_birthdate = str(cleaned.get(CONF_BIRTHDATE, "")).strip()
+            if raw_birthdate:
+                try:
+                    date.fromisoformat(raw_birthdate)
+                except ValueError:
+                    errors["base"] = "invalid_birthdate"
+                else:
+                    cleaned[CONF_BIRTHDATE] = raw_birthdate
+            else:
+                cleaned.pop(CONF_BIRTHDATE, None)
+
+            if not errors:
+                return self.async_create_entry(data=cleaned)
 
         suggested_options = {
             CONF_SCAN_INTERVAL_MINUTES: self.config_entry.options.get(
@@ -118,7 +135,11 @@ class IntervalsIcuOptionsFlow(config_entries.OptionsFlowWithReload):
                     CONF_SCAN_INTERVAL_MINUTES,
                     DEFAULT_SCAN_INTERVAL_MINUTES,
                 ),
-            )
+            ),
+            CONF_BIRTHDATE: self.config_entry.options.get(
+                CONF_BIRTHDATE,
+                self.config_entry.data.get(CONF_BIRTHDATE, ""),
+            ),
         }
 
         return self.async_show_form(
@@ -126,4 +147,5 @@ class IntervalsIcuOptionsFlow(config_entries.OptionsFlowWithReload):
             data_schema=self.add_suggested_values_to_schema(
                 OPTIONS_SCHEMA, suggested_options
             ),
+            errors=errors,
         )
