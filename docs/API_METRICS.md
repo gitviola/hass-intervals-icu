@@ -133,7 +133,9 @@ Status semantics:
 - `Unbalanced`: status value is outside baseline range but not low/poor.
 - `Low`: status value is below low threshold.
 - `Poor`: persistent low-vs-age context condition (with age from athlete profile birthdate/sex, or optional birthdate override setting).
-- `No status`: insufficient data for reliable status/baseline.
+- `No status`: insufficient recent data for a reliable 7-day status value. Baseline
+  bounds may still be available during gap recovery if enough older overnight HRV
+  history exists.
 
 Efficiency semantics:
 - Uses coordinator-side source fingerprinting and cache reuse when wellness HRV inputs are unchanged.
@@ -148,7 +150,16 @@ Efficiency semantics:
   - `lv`: compact status codes (`b`, `u`, `l`, `p`, `n`)
 
 Current baseline derivation shape:
-- Baseline window: 28 days of overnight HRV history.
+- Baseline window: 28 days of lagged overnight HRV history during normal operation.
+- Seasoned-history mode: once enough lagged history exists, baseline shifts to a
+  56-day lagged lookback to better match Garmin's slower-moving mature baseline.
+- Gap recovery: if the lagged 28-day slice is too sparse, baseline recovery expands
+  the lagged lookback up to 66 days to preserve Garmin-like continuity across watch/data gaps.
+- Early bootstrap: if lagged history is still too short on a new account, baseline
+  falls back to the recent unlagged 28-day slice once at least 12 overnight samples exist.
 - Baseline lag: 6 days (reduces immediate pull from very recent overnight dips/spikes).
-- Baseline bounds: 30th and 97th percentiles of the lagged window.
+- Baseline bounds:
+  - Normal dense-history mode: 32nd and 97th percentiles.
+  - Seasoned-history mode: 32nd and 95th percentiles.
+  - Gap-recovery mode: 33rd and 95th percentiles.
 - Low threshold: below baseline lower bound by at least 2 ms (or 25% of baseline width, whichever is larger).

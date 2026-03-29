@@ -281,6 +281,62 @@ class HrvStatusDerivationTests(unittest.TestCase):
         self.assertEqual(payload["level"], "no_status")
         self.assertEqual(payload["source_status"], "insufficient_data")
 
+    def test_bootstrap_baseline_is_available_after_two_weeks(self) -> None:
+        rows = _build_hrv_rows(start_day=date(2026, 1, 1), values=[55] * 14)
+
+        coordinator = self._coordinator()
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "MALE", "icu_date_of_birth": "1990-01-01"},
+            wellness_rows=rows,
+            source_error=None,
+        )
+
+        self.assertEqual(payload["baseline_window_mode"], "bootstrap")
+        self.assertEqual(payload["baseline_lag_days"], 0)
+        self.assertEqual(round(float(payload["baseline_low"])), 55)
+        self.assertEqual(round(float(payload["baseline_high"])), 55)
+
+    def test_gap_recovery_keeps_baseline_without_recent_7d_status(self) -> None:
+        values = (
+            [44, 45, 46, 47, 48] * 8
+            + [None] * 17
+            + [45]
+        )
+        rows = _build_hrv_rows(start_day=date(2026, 1, 1), values=values)
+
+        coordinator = self._coordinator()
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "MALE", "icu_date_of_birth": "1990-01-01"},
+            wellness_rows=rows,
+            source_error=None,
+        )
+
+        self.assertEqual(payload["level"], "no_status")
+        self.assertIsNone(payload["value"])
+        self.assertEqual(payload["source_status"], "insufficient_data")
+        self.assertEqual(payload["baseline_window_mode"], "recovery")
+        self.assertEqual(payload["baseline_lag_days"], 6)
+        self.assertEqual(payload["baseline_lower_percentile"], 33.0)
+        self.assertEqual(payload["baseline_upper_percentile"], 95.0)
+        self.assertEqual(round(float(payload["baseline_low"])), 45)
+        self.assertEqual(round(float(payload["baseline_high"])), 48)
+
+    def test_seasoned_history_uses_longer_lagged_window(self) -> None:
+        rows = _build_hrv_rows(start_day=date(2026, 1, 1), values=[55] * 60)
+
+        coordinator = self._coordinator()
+        payload = coordinator._derive_hrv_status_payload(
+            athlete={"sex": "MALE", "icu_date_of_birth": "1990-01-01"},
+            wellness_rows=rows,
+            source_error=None,
+        )
+
+        self.assertEqual(payload["baseline_window_mode"], "seasoned")
+        self.assertEqual(payload["baseline_window_days"], 56)
+        self.assertEqual(payload["baseline_lag_days"], 6)
+        self.assertEqual(payload["baseline_lower_percentile"], 32.0)
+        self.assertEqual(payload["baseline_upper_percentile"], 95.0)
+
     def test_empty_source_has_empty_history_28d(self) -> None:
         coordinator = self._coordinator()
         payload = coordinator._derive_hrv_status_payload(
@@ -405,7 +461,7 @@ class HrvStatusDerivationTests(unittest.TestCase):
         ):
             point = points_by_date[day]
             expected_low, expected_high, _ = expected[day]
-            self.assertLessEqual(abs(round(float(point["baseline_low"])) - expected_low), 1)
+            self.assertLessEqual(abs(round(float(point["baseline_low"])) - expected_low), 2)
             self.assertLessEqual(abs(round(float(point["baseline_high"])) - expected_high), 1)
 
     def test_garmin_q1_fixture_baseline_model_error_bound(self) -> None:

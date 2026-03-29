@@ -7,6 +7,27 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-03-29
+
+### Changed
+
+- Retuned Garmin-like HRV baseline derivation to better match gap-heavy Garmin
+  exports:
+  - Normal mode keeps a lagged 28-day baseline window with percentile bounds
+    tuned to `32/97`.
+  - Seasoned-history mode now promotes mature accounts to a lagged 56-day
+    baseline window with percentile bounds `32/95`.
+  - Gap recovery expands the lagged lookback up to 66 days and narrows
+    percentile bounds to `33/95` when recent history is sparse.
+  - Baseline bounds can now remain available even when a fresh 7-day HRV status
+    value is still unavailable after a data gap.
+
+### Added
+
+- Added baseline derivation metadata attributes for HRV status entities and a
+  maintainer replay tool to compare calculated Garmin-like HRV baselines against
+  exported Garmin history day by day.
+
 ## [0.8.1] - 2026-03-25
 
 ### Changed
@@ -188,7 +209,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.2
 [0.8.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.1
 [0.8.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.0
 [0.7.3]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.7.3

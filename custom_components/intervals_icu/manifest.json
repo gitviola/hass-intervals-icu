@@ -12,5 +12,5 @@
   "loggers": [
     "custom_components.intervals_icu"
   ],
-  "version": "0.8.1"
+  "version": "0.8.2"
 }
