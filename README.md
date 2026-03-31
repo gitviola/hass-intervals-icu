@@ -38,6 +38,10 @@ Authentication model:
   - `HRV Status (Level)` (`Balanced`/`Unbalanced`/`Low`/`Poor`/`No status`)
   - `HRV Baseline Lower`, `HRV Baseline Upper`, `HRV Low Threshold (7-Day Avg)`
 - Dynamic sport wellness metrics from `sportInfo` (for example Ride/Run eFTP, W Prime, P Max)
+- Fast same-day change detection: the integration probes Intervals.icu every minute
+  using lightweight activity/wellness freshness metadata, then performs a full
+  refresh only when today's upstream data changes or the configured full refresh
+  interval elapses
 - Null rollover logic for persistent metrics (for example HRV, VO2max, resting HR, weight)
 
 HRV age-context source:

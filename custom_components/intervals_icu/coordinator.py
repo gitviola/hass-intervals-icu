@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import math
@@ -9,7 +10,7 @@ import re
 from datetime import date, timedelta
 from decimal import Decimal
 from statistics import mean, stdev
-from typing import Any
+from typing import Any, TypeAlias
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -52,7 +53,21 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-_ACTIVITY_DAILY_FIELDS = ("id", "start_date_local", "calories")
+_ACTIVITY_PROBE_FIELDS = (
+    "id",
+    "start_date_local",
+    "created",
+    "icu_sync_date",
+    "analyzed",
+)
+_ACTIVITY_DAILY_FIELDS = (*_ACTIVITY_PROBE_FIELDS, "calories")
+_ACTIVITY_PROBE_LIMIT = 5
+_WELLNESS_PROBE_FIELDS = ("id", "updated")
+_FAST_PROBE_INTERVAL = timedelta(minutes=1)
+
+_ActivityProbeState: TypeAlias = tuple[tuple[str, str, str, str, str], ...]
+_WellnessProbeState: TypeAlias = tuple[str, str]
+_RemoteProbeState: TypeAlias = tuple[_ActivityProbeState, _WellnessProbeState]
 
 _WELLNESS_NO_ROLLOVER_KEYS = {
     "id",
@@ -140,6 +155,9 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
         self._hrv_status_cache: dict[str, Any] = {}
         self._hrv_history_days = HRV_STATUS_BOOTSTRAP_DAYS
+        self._full_refresh_interval: timedelta
+        self._last_full_refresh_at = None
+        self._last_probe_state: _RemoteProbeState | None = None
 
         scan_interval = int(
             entry.options.get(
@@ -147,18 +165,49 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 entry.data.get(CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_INTERVAL_MINUTES),
             )
         )
+        self._full_refresh_interval = timedelta(minutes=scan_interval)
 
         super().__init__(
             hass,
             logger=_LOGGER,
             name=DOMAIN,
             config_entry=entry,
-            update_interval=timedelta(minutes=scan_interval),
+            update_interval=_FAST_PROBE_INTERVAL,
             always_update=False,
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch latest Intervals.icu data used by sensors."""
+        probe_state: _RemoteProbeState | None = None
+
+        if self._last_full_refresh_at is not None:
+            try:
+                probe_state = await self._async_fetch_remote_probe_state()
+            except IntervalsIcuAuthError as err:
+                raise ConfigEntryAuthFailed from err
+            except (IntervalsIcuConnectionError, IntervalsIcuApiError) as err:
+                if not self._full_refresh_due():
+                    _LOGGER.debug(
+                        "Fast Intervals.icu probe failed for athlete %s; reusing cached data: %s",
+                        self.athlete_id,
+                        err,
+                    )
+                    return self.data
+                _LOGGER.debug(
+                    "Fast Intervals.icu probe failed for athlete %s; falling back to full refresh: %s",
+                    self.athlete_id,
+                    err,
+                )
+            else:
+                if probe_state == self._last_probe_state and not self._full_refresh_due():
+                    return self.data
+
+                if probe_state != self._last_probe_state:
+                    _LOGGER.debug(
+                        "Detected upstream Intervals.icu changes for athlete %s; running full refresh",
+                        self.athlete_id,
+                    )
+
         try:
             athlete = await self.api.get_athlete(self.athlete_id)
             summary_rows = await self.api.get_athlete_summary(self.athlete_id)
@@ -177,7 +226,7 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
         try:
-            activity_daily = await self._async_fetch_daily_activity_calories()
+            activity_daily, activity_rows = await self._async_fetch_daily_activity_calories()
         except IntervalsIcuAuthError as err:
             raise ConfigEntryAuthFailed from err
 
@@ -204,7 +253,7 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             source_error=wellness_error,
         )
 
-        return {
+        data = {
             "athlete": athlete,
             "summary": summary,
             "activity_daily": activity_daily,
@@ -212,8 +261,17 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "wellness_sport_metrics": wellness_sport_metrics,
             "wellness_hrv_status": wellness_hrv_status,
         }
+        self._last_full_refresh_at = dt_util.now()
+        self._last_probe_state = probe_state or _build_remote_probe_state(
+            activity_rows=activity_rows,
+            calculation_date=activity_daily["calculation_date"],
+            wellness_rows=wellness_rows,
+        )
+        return data
 
-    async def _async_fetch_daily_activity_calories(self) -> dict[str, Any]:
+    async def _async_fetch_daily_activity_calories(
+        self,
+    ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         """Fetch and aggregate day-level activity calories."""
         calculation_date = dt_util.now().date().isoformat()
         oldest, newest = _activity_window_bounds(calculation_date)
@@ -234,9 +292,41 @@ class IntervalsIcuCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 calculation_date,
                 err,
             )
-            return _activity_daily_error_payload(calculation_date, str(err))
+            return _activity_daily_error_payload(calculation_date, str(err)), []
 
-        return _aggregate_daily_activity_calories(activities, calculation_date)
+        return _aggregate_daily_activity_calories(activities, calculation_date), activities
+
+    async def _async_fetch_remote_probe_state(self) -> _RemoteProbeState:
+        """Fetch lightweight metadata that changes when today's data changes."""
+        calculation_date = dt_util.now().date().isoformat()
+        oldest, newest = _activity_window_bounds(calculation_date)
+
+        activity_rows, wellness_rows = await asyncio.gather(
+            self.api.list_activities(
+                self.athlete_id,
+                oldest=oldest,
+                newest=newest,
+                fields=_ACTIVITY_PROBE_FIELDS,
+                limit=_ACTIVITY_PROBE_LIMIT,
+            ),
+            self.api.list_wellness_records(
+                self.athlete_id,
+                oldest=calculation_date,
+                newest=calculation_date,
+                fields=_WELLNESS_PROBE_FIELDS,
+            ),
+        )
+        return _build_remote_probe_state(
+            activity_rows=activity_rows,
+            calculation_date=calculation_date,
+            wellness_rows=wellness_rows,
+        )
+
+    def _full_refresh_due(self) -> bool:
+        """Return whether the configured full refresh interval has elapsed."""
+        if self._last_full_refresh_at is None:
+            return True
+        return (dt_util.now() - self._last_full_refresh_at) >= self._full_refresh_interval
 
     async def _async_fetch_wellness_history(
         self, summary: dict[str, Any]
@@ -465,6 +555,84 @@ def _select_latest_wellness_row(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def _activity_window_bounds(local_day: str) -> tuple[str, str]:
     """Build start/end timestamps for one local day."""
     return (f"{local_day}T00:00:00", f"{local_day}T23:59:59")
+
+
+def _build_remote_probe_state(
+    *,
+    activity_rows: list[dict[str, Any]],
+    calculation_date: str,
+    wellness_rows: list[dict[str, Any]],
+) -> _RemoteProbeState:
+    """Build a comparable snapshot of lightweight upstream freshness signals."""
+    return (
+        _activity_probe_state(activity_rows, calculation_date),
+        _wellness_probe_state(wellness_rows, calculation_date),
+    )
+
+
+def _activity_probe_state(
+    rows: list[dict[str, Any]], calculation_date: str
+) -> _ActivityProbeState:
+    """Build a stable activity freshness snapshot for one local day."""
+    latest_by_id: dict[str, dict[str, Any]] = {}
+
+    for row in rows:
+        activity_id = str(row.get("id") or "").strip()
+        if not activity_id:
+            continue
+
+        start_date_local = str(row.get("start_date_local") or "")
+        if start_date_local and len(start_date_local) >= 10 and start_date_local[:10] != calculation_date:
+            continue
+
+        existing = latest_by_id.get(activity_id)
+        if existing is None or _activity_probe_sort_key(row) >= _activity_probe_sort_key(existing):
+            latest_by_id[activity_id] = row
+
+    ordered_rows = sorted(
+        latest_by_id.values(),
+        key=_activity_probe_sort_key,
+        reverse=True,
+    )
+
+    return tuple(
+        (
+            str(row.get("id") or ""),
+            str(row.get("start_date_local") or ""),
+            str(row.get("created") or ""),
+            str(row.get("icu_sync_date") or ""),
+            str(row.get("analyzed") or ""),
+        )
+        for row in ordered_rows[:_ACTIVITY_PROBE_LIMIT]
+    )
+
+
+def _activity_probe_sort_key(row: dict[str, Any]) -> tuple[str, str, str, str, str]:
+    """Sort activity freshness rows by most-recent metadata first."""
+    return (
+        str(row.get("start_date_local") or ""),
+        str(row.get("created") or ""),
+        str(row.get("icu_sync_date") or ""),
+        str(row.get("analyzed") or ""),
+        str(row.get("id") or ""),
+    )
+
+
+def _wellness_probe_state(
+    rows: list[dict[str, Any]], calculation_date: str
+) -> _WellnessProbeState:
+    """Build a stable wellness freshness snapshot for one local day."""
+    todays_rows = [
+        row for row in rows if str(row.get("id") or "").strip() == calculation_date
+    ]
+    if not todays_rows:
+        return ("", "")
+
+    latest = max(todays_rows, key=_wellness_sort_key)
+    return (
+        str(latest.get("id") or ""),
+        str(latest.get("updated") or ""),
+    )
 
 
 def _aggregate_daily_activity_calories(

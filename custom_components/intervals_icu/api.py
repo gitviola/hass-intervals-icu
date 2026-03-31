@@ -92,6 +92,7 @@ class IntervalsIcuApiClient:
         *,
         oldest: str | None = None,
         newest: str | None = None,
+        fields: Sequence[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Fetch wellness records for a date range."""
         params: dict[str, Any] = {}
@@ -99,6 +100,10 @@ class IntervalsIcuApiClient:
             params["oldest"] = oldest
         if newest:
             params["newest"] = newest
+        if fields:
+            selected = [field.strip() for field in fields if field and field.strip()]
+            if selected:
+                params["fields"] = ",".join(selected)
 
         data = await self._request_json(
             "GET",

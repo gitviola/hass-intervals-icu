@@ -25,7 +25,7 @@
       "init": {
         "title": "Intervals.icu options",
         "data": {
-          "scan_interval_minutes": "Polling interval (minutes)",
+          "scan_interval_minutes": "Full refresh interval (minutes)",
           "birthdate": "Birthdate override (YYYY-MM-DD, optional)"
         }
       }

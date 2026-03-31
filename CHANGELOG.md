@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-31
+
+### Added
+
+- Added a lightweight 1-minute upstream freshness probe so the integration can
+  detect new same-day activities or wellness updates quickly and only perform a
+  full refresh when Intervals.icu metadata changes or the configured scan
+  interval elapses.
+
 ## [0.8.2] - 2026-03-29
 
 ### Changed
@@ -209,7 +218,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added AGENTS release workflow guidance for ongoing maintenance.
 
-[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/gitviola/hass-intervals-icu/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.9.0
 [0.8.2]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.2
 [0.8.1]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.1
 [0.8.0]: https://github.com/gitviola/hass-intervals-icu/releases/tag/v0.8.0
